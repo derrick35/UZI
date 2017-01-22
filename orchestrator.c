@@ -1,9 +1,11 @@
 ﻿#include "orchestrator.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-
+#include <string.h>
+#include <bsd/string.h>
 
 /* In order to obtain a key */
 static key_t doExtractKey_r() {
@@ -26,7 +28,6 @@ ipc_code CreateIPC_r () {
 	return doOpenIPC_r( IPC_CREAT | IPC_EXCL | DEFAULT_IPC_PERM_READ ) ;
 }
 
-
 static key_t doExtractKey_b() {
 	return ftok(IPC_NAME,id_black);
 }
@@ -48,39 +49,45 @@ ipc_code CreateIPC_b() {
 }
 
 /* Orchestrator read message from PROG READ  */
-ipc_code ReadIPC() {
+ipc_code ReadIPC(char **msg) {
 	mbuf ipcMsg_r;
-	//ssize_t len = 0 ; /* length of the message */
-	//(void) memset( &ipcMsg, 0, sizeof(mbuf));
-	for (;;)
-	msgrcv(msg_id_r, &ipcMsg_r, MAX_SIZE, 0, 0);
-	printf("Reception de message du PROG READ envoyes par : %s",ipcMsg_r.mtext);
-	
+	ssize_t len = 0 ; /* length of the message */
+	(void) memset( &ipcMsg_r, 0, sizeof(mbuf));
+	for (;;) {
+	len = msgrcv(msg_id_r, &ipcMsg_r, MAX_SIZE, 0, 0);
+	*msg = (char *) malloc(len);
+	(void) memcpy(*msg, ipcMsg_r.mtext, len);
+	printf("Reception de message du PROG READ envoyes par : %s",ipcMsg_r.mtext);}
 }
 
 /* Orchestrator write message for PROG BLACK  */
-ipc_code WriteIPC() {
-	mbuf ipcMsg_b;
-	//ssize_t len = 0 ; /* length of the message */
-	ipcMsg_b.mtype = 1;
-	ipcMsg_b.mtext[255] = "essai";
-	msgsnd(msg_id_b, &ipcMsg_b, MAX_SIZE, 0);
+ipc_code WriteIPC(char *msg) {
+	mbuf *ipcMsg_b = NULL;
+	ipcMsg_b = (mbuf*) malloc(sizeof(mbuf));
+	ipcMsg_b->mtype = 1;
+	strncpy(ipcMsg_b->mtext,"essai",255);
+	strcpy(ipcMsg_b->mtext, msg);
+	msgsnd(msg_id_b, ipcMsg_b, MAX_SIZE, 0);
 	printf("Envoi vers Blacklist");
 	
 	return IPC_SUCCESS;
 }
 
-
 int main(int argc, char **argv)
 {
+	char **msg_r = NULL;
+	char *msg_b = NULL;
+	printf("debut IPC");
 	CreateIPC_r();
 	CreateIPC_b();
+	printf("les 2 IPC ont ete crees");
 	printf("Orchestrator en attente de message de PROG READ");
-	ReadIPC();
+	ReadIPC(msg_r);
+	WriteIPC(msg_b);
 	
-	
-	WriteIPC();
+	sleep(10);
+	msgctl(msg_id_r, IPC_RMID, NULL);
+	msgctl(msg_id_b, IPC_RMID, NULL);
 	
 	return 0;
-	
 }

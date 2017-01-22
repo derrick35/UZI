@@ -1,12 +1,15 @@
-#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <bsd/string.h>
+
 
 #define MAX_SIZE 255
 
 /*  Name of IPC */
-#define IPC_NAME "/home/derrick/Documents/CFSSI_2016/PROG /PROG_SECURISEE/Projet/Projet_UZI_local/Projet_UZI_loc/orchestrator.c"
+#define IPC_NAME "/home/derrick/Documents/CFSSI_2016/PROG /PROG_SECURISEE/Projet/UZI/orchestrator.c"
 
 /* Read can send message but only orchestrator can read */
 #define DEFAULT_IPC_PERM_READ  0x620 
@@ -59,3 +62,9 @@ static ipc_code doOpenIPC_b(int flag);
 
 /* Obtain a key and create a new message queue with error management */
 ipc_code CreateIPC_b() ;
+
+/* Orchestrator read message from PROG READ  */
+ipc_code ReadIPC(char **msg);
+
+/* Orchestrator write message for PROG BLACK  */
+ipc_code WriteIPC(char *msg) ;
