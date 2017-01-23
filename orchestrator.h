@@ -1,35 +1,27 @@
 #include <stdlib.h>
-#include <stdio.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <bsd/string.h>
-
 
 #define MAX_SIZE 255
 
-/*  Name of IPC */
-#define IPC_NAME "/home/derrick/Documents/CFSSI_2016/PROG /PROG_SECURISEE/Projet/UZI/orchestrator.c"
+/*  Name of IPC, file must exist and reachable */
+#define IPC_NAME "/tmp/fichier_cle"
 
 /* Read can send message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0x620 
+#define DEFAULT_IPC_PERM_READ  0620 
 
 /* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0x640 
+#define DEFAULT_IPC_PERM_BLACK  0640 
 
-/* id message queue for READ PROG*/
-int msg_id_r = 0;
-
-/* id message queue for BLACK PROG*/
-int msg_id_b = 0;
+typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
 
 /* id project for READ PROG*/
 int id_read = 1;
 
 /* id project for BLACK PROG*/
-int id_black = 2;
-
-typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
+int id_black = 225;
 
 /* IPC key for READ PROG */
 key_t key_r = 0;

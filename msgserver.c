@@ -13,10 +13,10 @@ int main (int argc, char ** argv) {
   
   key_b = ftok(IPC_NAME,id_black);
  
-  msg_id_b = msgget( key_b, 0777 ) ;  // pour accéder à la file crée par orchestrator
+  msg_id_b = msgget( key_b, 0 ) ;  // pour accéder à la file crée par orchestrator
   msgrcv(msg_id_b, &ipcMsg_b, MAX_SIZE, 0, 0);
    ipcMsg_b.mtype = 1;
-	printf("Reception from orchestrator du message %c",ipcMsg_b.mtext[255]);
+	printf("Reception from orchestrator du message %c",ipcMsg_b.mtext);
 
 }
 

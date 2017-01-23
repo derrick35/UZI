@@ -4,15 +4,16 @@
 #include <sys/msg.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
-int main (int argc, char ** argv) {
+int main () {
 	
   mbuf ipcMsg_r;	 /* message courant */
   int 	msg_id_r;	 /* identificateur de la file de messages */
  
  key_r = ftok(IPC_NAME,id_read);
   
-  msg_id_r = msgget( key_r, 0777 ) ;  // pour accéder à la file crée par orchestrator
+  msg_id_r = msgget( key_r, 0 ) ;  // pour accéder à la file crée par orchestrator
    ipcMsg_r.mtype = 1;
    strncpy(ipcMsg_r.mtext,"message from READ",255);
   int i;
