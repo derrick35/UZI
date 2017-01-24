@@ -15,13 +15,17 @@
 /* Blacklist can read message but only orchestrator can write */
 #define DEFAULT_IPC_PERM_BLACK  0640 
 
+#define NB_THREADS 2
+
 typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
 
-/* id project for READ PROG*/
-int id_read = 1;
+typedef enum {THREAD_ERROR, THREAD_ERROR_JOIN } ;
 
-/* id project for BLACK PROG*/
-int id_black = 225;
+/* id project for READ PROG */
+int id_read = 46;
+
+/* id project for BLACK PROG */
+int id_black = 57;
 
 /* IPC key for READ PROG */
 key_t key_r = 0;
@@ -56,7 +60,7 @@ static ipc_code doOpenIPC_b(int flag);
 ipc_code CreateIPC_b() ;
 
 /* Orchestrator read message from PROG READ  */
-ipc_code ReadIPC(char **msg);
+ipc_code ReadIPC();
 
 /* Orchestrator write message for PROG BLACK  */
 ipc_code WriteIPC(char *msg) ;
