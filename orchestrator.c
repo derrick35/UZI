@@ -6,6 +6,8 @@
 #include <sys/msg.h>
 #include <string.h>
 #include <bsd/string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <inttypes.h>
@@ -20,14 +22,19 @@ static int msg_id_b = 1;
 
 /* In order to obtain the key value from IPC name for READ PROG */
 static key_t doExtractKey_r() {
-	return ftok(IPC_NAME, id_read);
+	return ftok(IPC_NAME_READ, id_read);
 }
 
 static ipc_code doOpenIPC_r(int flag) {
 	if ( (key_r = doExtractKey_r() ) == -1 )
 	{
+		if (errno == ENOENT ) {
+			open("/tmp/squid_data", O_RDWR | O_CREAT | O_APPEND ) ;
+			key_r =   doExtractKey_r() ;
+							}
+		else {
 		error(0, errno, "IPC_ERROR_KEY");
-		return IPC_ERROR;
+		return IPC_ERROR;	}
 	}
 	if ( (msg_id_r = msgget(key_r, flag ) ) == -1 )  /* Create a message queue */
 	{
@@ -40,7 +47,7 @@ static ipc_code doOpenIPC_r(int flag) {
 }
 
 ipc_code CreateIPC_r() {
-	return doOpenIPC_r(IPC_CREAT | IPC_EXCL | DEFAULT_IPC_PERM_READ ) ;
+	return doOpenIPC_r(IPC_CREAT  | DEFAULT_IPC_PERM_READ ) ;
 }
 
 static ipc_code OpenIPC_r() {
@@ -48,14 +55,19 @@ static ipc_code OpenIPC_r() {
 }
 
 static key_t doExtractKey_b() {
-	return ftok(IPC_NAME, id_black);
+	return ftok(IPC_NAME_BLACK, id_black);
 }
 
 static ipc_code doOpenIPC_b(int flag) {
 	if ( (key_b = doExtractKey_b() ) == -1 )
 	{
+		if (errno == ENOENT ) {
+			open("/tmp/black_data", O_RDWR | O_CREAT | O_APPEND ) ;
+			key_b =  doExtractKey_b();
+								}
+		else {
 		error(0, errno, "IPC_ERROR_KEY");
-		return IPC_ERROR;
+		return IPC_ERROR;	}
 	}
 	if ( (msg_id_b = msgget(key_b, flag ) ) == -1 )  /* Create a message queue */
 	{
@@ -68,7 +80,7 @@ static ipc_code doOpenIPC_b(int flag) {
 }
 
 ipc_code CreateIPC_b() {
-	return doOpenIPC_b(IPC_CREAT | IPC_EXCL | DEFAULT_IPC_PERM_BLACK) ;
+	return doOpenIPC_b(IPC_CREAT  | DEFAULT_IPC_PERM_BLACK) ;
 }
 
 static ipc_code OpenIPC_b() {
@@ -87,13 +99,11 @@ int CloseIPC_b() {
 ipc_code ReadIPC() {
 	mbuf ipcMsg_r;
 	(void) memset( &ipcMsg_r, 0, sizeof(mbuf));
-	//for (;;) {
 	msgrcv(msg_id_r, (void *) &ipcMsg_r, 255, 0, 0);
-	//*msg = (char *) malloc(len);
-	//(void) memcpy(*msg, ipcMsg_r.mtext, len);
 	printf("Reception sur orchestrator : %s \n",ipcMsg_r.mtext); 
 	CloseIPC_r();
 	printf("ReadIPC est ferme \n");
+	return IPC_SUCCESS;
 }
 
 /* Orchestrator write message for PROG BLACK  */
@@ -101,38 +111,22 @@ ipc_code WriteIPC(char *msg) {
 	mbuf *ipcMsg_b = NULL;
 	ipcMsg_b =  (mbuf * ) malloc(sizeof(mbuf));
 	ipcMsg_b->mtype = 42;
-	//long size = sizeof(ipcMsg_b);
 	strncpy(ipcMsg_b->mtext,msg,MAX_SIZE);
-	//strncpy(ipcMsg_b->mtext, msg, size);
-	msgsnd(msg_id_b, ipcMsg_b,255,0); //strlen( ipcMsg_b->mtext ) + 1 , 0);
+	msgsnd(msg_id_b, ipcMsg_b,MAX_SIZE,0); 
 	printf("%s \n",ipcMsg_b->mtext);
-	printf("Envoi vers Blacklist \n");
+	printf("Send to Blacklist \n");
 	sleep(10);
 	CloseIPC_b() ;
 	return IPC_SUCCESS;
 }
 
-/*
-  mbuf ipcMsg_r;	 
-  int 	msg_id_r;	 
- 
- key_r = ftok(IPC_NAME,id_read);
-  printf("Envoi de messages vers orchestrator \n");
-  msg_id_r = msgget( key_r, 0 ) ;  // pour accéder à la file crée par orchestrator
-   ipcMsg_r.mtype = 1;
-   strncpy(ipcMsg_r.mtext,"message from READ",255);
-  int i;
-   for ( i = 0 ; i < 6 ; i++) {
-  msgsnd(msg_id_r, &ipcMsg_r, MAX_SIZE,0);  // on envoit 6 messages
-*/
-
-
 /* Thread which launch the reading from READ PROG  */
 void *read_thread(void *arg) {
 	(void) arg ;
-	printf("Ouverture IPC read \n");
+	printf("Open IPC read \n");
 	CreateIPC_r() ; 
-	printf("%d \n",msg_id_r);
+	printf(" %d \n ",key_r);
+	printf("id read %d \n",msg_id_r);
 	ReadIPC();
 	pthread_exit(NULL);
 }
@@ -140,7 +134,7 @@ void *read_thread(void *arg) {
 /* Thread which launch the writing from ORCHE PROG towards BLACK PROG  */
 void *black_thread(void *arg) {
 	(void) arg ;
-	printf("Ouverture IPC black \n");
+	printf("Open IPC black \n");
 	CreateIPC_b() ; 
 	printf("id black %d \n",msg_id_b);
 	char *msg_b = "essai";
@@ -151,26 +145,37 @@ void *black_thread(void *arg) {
 int main()
 {
 	printf("Avant la creation du Thread \n");
-	pthread_t thread1;
-	pthread_t thread2;
+	pthread_t thread_r;
+	pthread_t thread_b;
 		
-	if (pthread_create(&thread1, NULL, read_thread, NULL)  != 0 ) {
+	CreateIPC_b() ; 
+	printf("Launch IPC Black \n");
+		
+	if (pthread_create(&thread_r, NULL, read_thread, NULL)  != 0 ) {
 			error(0, errno, "THREAD_ERROR_CREATE");
 			return THREAD_ERROR ;	}
 	
-	if ( ( pthread_join(thread1, NULL) ) != 0 ) {
+	if ( ( pthread_join(thread_r, NULL) ) != 0 ) {
 		error(0, errno, "THREAD_ERROR_JOIN");
 		return THREAD_ERROR_JOIN ;	}
 		 
-	if (pthread_create(&thread2, NULL, black_thread, NULL) !=0 ) {
+	if (pthread_create(&thread_b, NULL, black_thread, NULL) !=0 ) {
 			error(0, errno, "THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	}
 	
-	if ( ( pthread_join(thread2, NULL) ) != 0 ) {
+	if ( ( pthread_join(thread_b, NULL) ) != 0 ) {
 		error(0, errno, "THREAD_ERROR_JOIN");
 		return THREAD_ERROR_JOIN ;	}
 	
-	printf("Les 2 IPC ont été fermees \n");
+	if ( pthread_detach(&thread_b) != 0 )	{
+		perror("pthread_detach() error");
+		exit(EXIT_FAILURE);
+	}
+	if ( pthread_detach(&thread_b) != 0 )	{
+		perror("pthread_detach() error");
+		exit(EXIT_FAILURE);
+	}
+	printf("2 IPC were closed \n");
 	
 	return 0;
 }

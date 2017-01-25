@@ -7,13 +7,16 @@
 #define MAX_SIZE 255
 
 /*  Name of IPC, file must exist and reachable */
-#define IPC_NAME "/tmp/fichier_cle"
+#define IPC_NAME_READ "/tmp/squid_data"
+
+/*  Name of IPC, file must exist and reachable */
+#define IPC_NAME_BLACK "/tmp/black_data"
 
 /* Read can send message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0620 
+#define DEFAULT_IPC_PERM_READ  0666 
 
 /* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0640 
+#define DEFAULT_IPC_PERM_BLACK  0666 
 
 #define NB_THREADS 2
 
