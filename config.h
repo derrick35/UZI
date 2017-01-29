@@ -31,7 +31,10 @@ typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
 
 typedef struct {  //Structure of a message
 	long mtype;
-	char mtext[255];
-	char ad_IP[30];
+	char mtext[255]; /* type of message */
+	long ad_IP;
 	char autre[20];
 } mbuf;
+
+
+	

@@ -88,7 +88,7 @@ int CloseIPC_b() {
 }
 
 /* Orchestrator read message from IPC_r  */
-ipc_code ReadIPC(char ** msg) 
+ipc_code ReadIPC(mbuf ** msg) 
 {
 	mbuf ipcMsg_r;
 	ssize_t len = 0 ;  //length of the message
@@ -103,21 +103,26 @@ ipc_code ReadIPC(char ** msg)
 		perror("IPC_ERROR1") ; 
 		exit(EXIT_FAILURE);  
 	}
-	len = msgrcv(msg_id_r, (void *) &ipcMsg_r, 255, 0, 0);
-	*msg = (char * ) malloc (len ) ;
-	(void)memcpy( *msg, ipcMsg_r.mtext, len ) ;
-	printf("Reception sur orchestrator : %s \n",*msg); 
+	if ( (len = msgrcv(msg_id_r, (void *) &ipcMsg_r, sizeof(mbuf) +1, 0, 0) ) == -1) {return IPC_ERROR ; }
+	if ((*msg = (mbuf * ) malloc (len ) ) == NULL) {error(0, errno,"malloc_error"); }
+	(void)memmove( *msg, &ipcMsg_r, len ) ;
+	strncpy((*msg)->mtext,ipcMsg_r.mtext,MAX_SIZE);
+	(*msg)->ad_IP = ipcMsg_r.ad_IP ; 
+	strncpy((*msg)->autre,ipcMsg_r.autre,20);
+	printf("Reception sur orchestrator : %s / %ld / %s \n",(*msg)->mtext, (*msg)->ad_IP, (*msg)->autre); 
 	return IPC_SUCCESS;
 }
 
 /* Orchestrator write message for IPC_b  */
-ipc_code WriteIPC(char *msg) {
+ipc_code WriteIPC(mbuf *msg) {
 	mbuf *ipcMsg_b = NULL;
 	ipcMsg_b =  (mbuf * ) malloc(sizeof(mbuf));
-	ipcMsg_b->mtype = 42;
-	strncpy(ipcMsg_b->mtext,msg,MAX_SIZE);
-	msgsnd(msg_id_b, ipcMsg_b,MAX_SIZE,0); 
-	printf("Send to Blacklist : %s \n", ipcMsg_b->mtext);
+	ipcMsg_b->mtype = msg->mtype ;
+	strncpy(ipcMsg_b->mtext,msg->mtext,MAX_SIZE);
+	ipcMsg_b->ad_IP = msg->ad_IP;
+	strncpy(ipcMsg_b->autre,msg->autre,20);
+	msgsnd(msg_id_b, ipcMsg_b, sizeof(mbuf) ,0); 
+	printf("Send to IPC_b : %s / %ld / %s \n", ipcMsg_b->mtext, ipcMsg_b->ad_IP, ipcMsg_b->autre);
 	return IPC_SUCCESS;
 }
 
@@ -125,11 +130,14 @@ ipc_code WriteIPC(char *msg) {
 void *read_thread(void *arg) 
 {
 	(void) arg ;
-	if ( popen("./msgclient", "r" ) == NULL )
+	printf("Begin to send to IPC_r \n");
+	FILE *fr = popen("./msgclient", "r" ) ; 
+	if ( fr == NULL )
 	{
 		error(0, errno, "THREAD_ERROR_READ");
 		exit(EXIT_FAILURE);
 	}
+	if ( pclose(fr) == -1) { perror("pclose_error"); }
 	pthread_exit(NULL);
 }
 
@@ -137,7 +145,8 @@ void *read_thread(void *arg)
 void *orche_thread(void *arg) 
 {
 	(void) arg ;
-	char *msg = "test" ;
+	mbuf *msg  ;
+	msg = (mbuf*)malloc( sizeof(mbuf) ) ;
 	int i ;
 	for (i = 0; i < 6 ; i = i+1 ) 
 	{
@@ -151,17 +160,19 @@ void *orche_thread(void *arg)
 void *black_thread(void *arg) 
 {
 	(void) arg ;
-	if ( popen("./msgserver", "r" ) == NULL )
+	printf("Begin reception on Blacklist \n");
+	FILE *fb = popen("./msgserver", "r" ) ;
+	if ( fb == NULL )
 	{
 		error(0, errno, "THREAD_ERROR_BLACK");
 		exit(EXIT_FAILURE);
 	}
+	if ( pclose(fb) == -1 ) { perror("pclose_error"); }
 	pthread_exit(NULL);
 }
 
 int main()
 {
-	printf("Avant la creation du Thread \n");
 	pthread_t thread_r;
 	pthread_t thread_b;
 	pthread_t thread_o;
@@ -169,6 +180,7 @@ int main()
 	CreateIPC_r();	
 	CreateIPC_b() ; 
 	printf("Launch IPC READ and IPC Black \n");
+	printf("Launch 3 thread \n");
 	
 	if (pthread_create(&thread_r, NULL , read_thread, NULL) !=0 ) 
 	{

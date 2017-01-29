@@ -10,7 +10,7 @@
 #include <error.h>
 #include <errno.h>
  
-ipc_code Read_IPC( char **msg )	{
+ipc_code Read_IPC( mbuf **msg )	{
 	mbuf	ipcMsg_b;
 	ssize_t len = 0;	//length of the message
 	memset( &ipcMsg_b, 0, sizeof( mbuf ) ) ;
@@ -27,16 +27,16 @@ ipc_code Read_IPC( char **msg )	{
 	key_b = ftok(IPC_NAME_BLACK,id_black);
 	int msg_id_b = msgget( key_b, 0 ) ;
 	
-	if ( (len = msgrcv(msg_id_b, & ipcMsg_b, 255, 0, 0)) == -1 )	
+	if ( (len = msgrcv(msg_id_b, & ipcMsg_b, sizeof(mbuf)+1, 0, 0)) == -1 )	
 		{
-		perror("msgcrv failed with error \n");
+		perror("End lecture on IPC_b / msgcrv failed with error \n");
 	    exit(EXIT_FAILURE);
 		}
-    if ( ( *msg = ( char * ) malloc( len ) ) == NULL ) 
+    if ( ( *msg = ( mbuf * ) malloc( len ) ) == NULL ) 
 		{ 
 			return IPC_ERROR ;  
 		}
-    (void)memcpy( *msg, ipcMsg_b.mtext, len ) ;
+    (void)memmove( *msg, &ipcMsg_b, len +1) ;
    
         
     return IPC_SUCCESS ; 
@@ -45,7 +45,8 @@ ipc_code Read_IPC( char **msg )	{
 int main () 
 	{
 	int inprocess = 1;
-	char *msg  ;
+	mbuf *msg  ;
+	msg = (mbuf*)malloc( sizeof(mbuf) ) ;
 	while (inprocess) Read_IPC(&msg);
 	return 0;
 	}

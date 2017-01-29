@@ -37,7 +37,7 @@ static ipc_code doOpenIPC_b(int flag);
 ipc_code CreateIPC_b() ;
 
 /* Orchestrator read message from PROG READ  */
-ipc_code ReadIPC(char **msg);
+ipc_code ReadIPC(mbuf **msg);
 
 /* Orchestrator write message for PROG BLACK  */
-ipc_code WriteIPC(char *msg) ;
+ipc_code WriteIPC(mbuf *msg) ;
