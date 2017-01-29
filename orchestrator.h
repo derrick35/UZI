@@ -6,11 +6,7 @@
 #include "config.h"
 
 
-/* Read can send message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0666 
 
-/* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0666 
 
 #define NB_THREADS 2
 
@@ -37,7 +33,7 @@ static ipc_code doOpenIPC_b(int flag);
 ipc_code CreateIPC_b() ;
 
 /* Orchestrator read message from PROG READ  */
-ipc_code ReadIPC(mbuf **msg);
+ipc_code ReadIPC(mbuf **msg, mbuf ipcMsg_r, int msg_id);
 
 /* Orchestrator write message for PROG BLACK  */
-ipc_code WriteIPC(mbuf *msg) ;
+ipc_code WriteIPC(mbuf *msg, mbuf* ipcMsg_b, int msg_id) ;
