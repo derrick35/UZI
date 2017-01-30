@@ -14,7 +14,6 @@
 #include <error.h>
 #include <errno.h>
 
-
 /* Thread which launch the msgclient PROG  */
 void *read_thread(void *arg) 
 {
@@ -26,29 +25,45 @@ void *read_thread(void *arg)
 		error(0, errno, "THREAD_ERROR_READ");
 		exit(EXIT_FAILURE);
 	}
-	if ( pclose(fr) == -1) { perror("pclose_error"); }
+	if ( pclose(fr) == -1) 
+	{ 
+		perror("pclose_error");
+	}
 	pthread_exit(NULL);
 }
 
 /* Thread which read from IPC_r and write on IPC_b */
+
 void *orche_thread(void *arg) 
 {
 	(void) arg ;
 	mbuf *msg  ;
 	mbuf ipcMsg_r;
 	mbuf *ipcMsg_b;
-	ipcMsg_b = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg = (mbuf*)malloc( sizeof(mbuf) ) ;
+	
+	if ( (ipcMsg_b = (mbuf*)malloc( sizeof(mbuf)) ) == NULL )
+	{
+		error(0, errno, "THREAD_ERROR_ORCHE_MALLOC");
+		exit(EXIT_FAILURE);
+	} 	 ;
+	if ( (msg = (mbuf*)malloc( sizeof(mbuf) ) ) == NULL )
+	{
+		error(0, errno, "THREAD_ERROR_ORCHE_MALLOC");
+		exit(EXIT_FAILURE);
+	} 
+	
 	int i ;
 	for (i = 0; i < 5 ; i = i+1 ) 
 	{
 		ReadIPC(&msg, ipcMsg_r, msg_id_r);
 		printf("Reception sur orchestrator : %s / %ld / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
 		WriteIPC(msg, ipcMsg_b, msg_id_b);	
-		printf("Send to IPC_b : %s / %ld / %s \n", ipcMsg_b->mtext, ipcMsg_b->ad_IP, ipcMsg_b->autre);
 	}
+	
 	free(msg);
+	free(ipcMsg_b);
 	pthread_exit(NULL);
+	
 }
 
 /* Thread which launch the msgserver PROG  */
@@ -63,14 +78,15 @@ void *black_thread(void *arg)
 		exit(EXIT_FAILURE);
 	}
 	if ( pclose(fb) == -1 ) { perror("pclose_error"); }
+	
 	pthread_exit(NULL);
 }
 
 int main()
 {
-	pthread_t thread_r;
-	pthread_t thread_b;
-	pthread_t thread_o;
+	pthread_t thread_r; //thread which will lauch REAG PROG
+	pthread_t thread_b;	// Thread which will launch BLACK PROG
+	pthread_t thread_o;	// Thread which will launch ORCHESTRATOR PROG
 	
 	CreateIPC_r();	
 	CreateIPC_b() ; 
@@ -103,11 +119,10 @@ int main()
 	}
 		
 	sleep(15);
-	CloseIPC_b();
-	CloseIPC_r();
+	//CloseIPC_b();
+	//CloseIPC_r();
 
 	printf("2 IPC were closed \n");
-	
 	return 0;
 }
 

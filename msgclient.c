@@ -29,6 +29,7 @@ int main () {
 	strncpy(msg1->autre, " autre champ1", 20);
 	msg1->ad_IP = 169 ;
 	WriteIPC(msg1, ipcMsg_r, msg_id_r);
+
 	sleep(2);
 	mbuf *msg2  ;
 	msg2 = (mbuf*)malloc( sizeof(mbuf) ) ;
@@ -37,6 +38,7 @@ int main () {
 	strncpy(msg2->autre, " autre champ2", 20);
 	msg2->ad_IP = 170 ;
 	WriteIPC(msg2, ipcMsg_r, msg_id_r);
+	
 	sleep(2);
 	mbuf *msg3  ;
 	msg3 = (mbuf*)malloc( sizeof(mbuf) ) ;
@@ -45,6 +47,7 @@ int main () {
 	strncpy(msg3->autre, " autre champ3", 20);
 	msg3->ad_IP = 171 ;
 	WriteIPC(msg3, ipcMsg_r, msg_id_r);
+	
 	sleep(2);
 	mbuf *msg4  ;
 	msg4 = (mbuf*)malloc( sizeof(mbuf) ) ;

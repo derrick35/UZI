@@ -10,7 +10,7 @@
 
 #define NB_THREADS 2
 
-enum return_code {THREAD_ERROR, THREAD_ERROR_JOIN } ;
+
 
 /* Functions : */
 
