@@ -60,7 +60,7 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 typedef struct {  
 	long mtype;
 	char mtext[255]; 	/* type of message */
-	long ad_IP;			/* IP address */
+	char ad_IP[20];		/* IP address */
 	char autre[20];		
 } mbuf;
 
@@ -183,7 +183,7 @@ ipc_code ReadIPC(mbuf ** msg, mbuf ipcMsg, int msg_id)
 	(void)memmove( *msg, &ipcMsg, len ) ;
 	(*msg)->mtype = ipcMsg.mtype ; 
 	strncpy((*msg)->mtext,ipcMsg.mtext,MAX_SIZE);
-	(*msg)->ad_IP = ipcMsg.ad_IP ; 
+	strncpy((*msg)->ad_IP,ipcMsg.ad_IP,20);
 	strncpy((*msg)->autre,ipcMsg.autre,20);
 	
 	return IPC_SUCCESS;
@@ -204,7 +204,7 @@ ipc_code WriteIPC(mbuf *msg, mbuf *ipcMsg, int msg_id)
 	
 	ipcMsg->mtype = msg->mtype ;
 	strncpy(ipcMsg->mtext,msg->mtext,MAX_SIZE);
-	ipcMsg->ad_IP = msg->ad_IP;
+	strncpy(ipcMsg->ad_IP,msg->ad_IP, 20);
 	strncpy(ipcMsg->autre,msg->autre,20);
 	
 	if ( (msgsnd(msg_id, ipcMsg, sizeof(mbuf) +1 ,0)) == -1 )

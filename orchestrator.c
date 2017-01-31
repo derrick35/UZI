@@ -56,7 +56,7 @@ void *orche_thread(void *arg)
 	for (i = 0; i < 5 ; i = i+1 ) 
 	{
 		ReadIPC(&msg, ipcMsg_r, msg_id_r);
-		printf("Reception sur orchestrator : %s / %ld / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
+		printf("Reception sur orchestrator : %s / %s / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
 		WriteIPC(msg, ipcMsg_b, msg_id_b);	
 	}
 	
@@ -120,7 +120,7 @@ int main()
 		return THREAD_ERROR_JOIN ;	
 	}
 		
-	sleep(15);
+	sleep(10);
 	//CloseIPC_b();
 	//CloseIPC_r();
 

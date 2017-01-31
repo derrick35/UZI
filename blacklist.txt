@@ -1,2 +1,2 @@
-﻿Affiche rien zero
+﻿message0 168 autrechamp0
 message1 169 autrechamp1

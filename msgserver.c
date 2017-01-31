@@ -21,26 +21,30 @@ int compare(FILE * file, mbuf *msg)
 	
 	if ( file != NULL)
 	{
-		if( fgets(ligne, MAX_SIZE, file) != NULL )
+		while( fgets(ligne, MAX_SIZE, file) != NULL )
 			{
-				word = strtok_r(ligne, " ", &pointeur);
-				while (word != NULL );
-					{
-						printf("%s \n",word);
-						if ( (word = strtok_r(NULL, " ", &pointeur)) == msg->mtext )
+				 /*word = strtok_r(ligne, " ", &pointeur);
+				printf("%s \n", word);
+				word = strtok_r(NULL, " ", &pointeur);
+				printf("%s \n", word);
+				word = strtok_r(NULL, " ", &pointeur);
+				printf("%s \n", word);	*/
+					
+						//printf("%s \n",word);
+						if ( (word = strtok_r(ligne, " ", &pointeur)) == (msg->mtext) )
 						{
 							printf("%s \n",word);
-							if ( (word = strtok_r(NULL, " ", &pointeur)) == msg->ad_IP)
+							if ( (word = strtok_r(NULL, " ", &pointeur))  == (msg->ad_IP) )
 								{
 									printf("%s",word);
-									if ( (word = strtok_r(NULL, " ", &pointeur)) == msg->autre)
+									if ( (word = strtok_r(NULL, " ", &pointeur)) == (msg->autre) )
 										{
 											printf("%s",word);
 											printf(" Forbidden website : %s ", ligne);
 										}	
 								}
 						}
-					}
+					
 			
 			
 			/*if ( ligne[1] == (*msg->mtext)  || 
@@ -83,7 +87,7 @@ int main ()
 	 sleep(1);
 	 compare(file, msg);
 	 
-	 printf("Lecture par blacklist : %s / %ld / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
+	 printf("Lecture par blacklist : %s / %s / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
 	 
 	 }
 	 
