@@ -17,7 +17,7 @@ int main () {
 	ipcMsg_r = (mbuf*)malloc( sizeof(mbuf) ) ;
 	msg->mtype = 42;
 	strncpy(msg->mtext, "message0", MAX_SIZE);
-	strncpy(msg->autre, " autre champ0", 20);
+	strncpy(msg->autre, " autrechamp0", 20);
 	msg->ad_IP = 168 ;
 	WriteIPC(msg, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	
@@ -26,7 +26,7 @@ int main () {
 	msg1 = (mbuf*)malloc( sizeof(mbuf) ) ;
 	msg1->mtype = 42;
 	strncpy(msg1->mtext, "message1", MAX_SIZE);
-	strncpy(msg1->autre, " autre champ1", 20);
+	strncpy(msg1->autre, " autrechamp1", 20);
 	msg1->ad_IP = 169 ;
 	WriteIPC(msg1, ipcMsg_r, msg_id_r);
 
@@ -35,7 +35,7 @@ int main () {
 	msg2 = (mbuf*)malloc( sizeof(mbuf) ) ;
 	msg2->mtype = 42;
 	strncpy(msg2->mtext, "message2", MAX_SIZE);
-	strncpy(msg2->autre, " autre champ2", 20);
+	strncpy(msg2->autre, " autrechamp2", 20);
 	msg2->ad_IP = 170 ;
 	WriteIPC(msg2, ipcMsg_r, msg_id_r);
 	
@@ -44,7 +44,7 @@ int main () {
 	msg3 = (mbuf*)malloc( sizeof(mbuf) ) ;
 	msg3->mtype = 42;
 	strncpy(msg3->mtext, "message3", MAX_SIZE);
-	strncpy(msg3->autre, " autre champ3", 20);
+	strncpy(msg3->autre, " autrechamp3", 20);
 	msg3->ad_IP = 171 ;
 	WriteIPC(msg3, ipcMsg_r, msg_id_r);
 	
@@ -53,7 +53,7 @@ int main () {
 	msg4 = (mbuf*)malloc( sizeof(mbuf) ) ;
 	msg4->mtype = 42;
 	strncpy(msg4->mtext, "message4", MAX_SIZE);
-	strncpy(msg4->autre, " autre champ4", 20);
+	strncpy(msg4->autre, " autrechamp4", 20);
 	msg4->ad_IP = 172 ;
 	WriteIPC(msg4, ipcMsg_r, msg_id_r);
 	

@@ -80,7 +80,7 @@ void *black_thread(void *arg)
 	if ( pclose(fb) == -1 ) { perror("pclose_error"); }
 	
 	pthread_exit(NULL);
-}
+}		
 
 int main()
 {
@@ -94,11 +94,13 @@ int main()
 	printf("Launch IPC READ and IPC Black \n");
 	printf("Launch 3 thread \n");
 	
+	/*
 	if (pthread_create(&thread_b, NULL, black_thread, NULL) !=0 ) 
 	{
 		error(0, errno, "THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	
 	}
+	 */
 	
 	if (pthread_create(&thread_r, NULL , read_thread, NULL) !=0 ) 
 	{
