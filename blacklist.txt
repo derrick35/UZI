@@ -1,2 +1,4 @@
 ﻿message0 168 autrechamp0
 message1 169 autrechamp1
+message	256	rien
+fou	trois	botte

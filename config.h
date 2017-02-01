@@ -81,7 +81,7 @@ static ipc_code doOpenIPC_r(int flag) {
 		}
 		else 
 		{
-			error(0, errno, "IPC_ERROR_KEY");
+			perror("IPC_ERROR_KEY");
 			return IPC_ERROR;	
 		}
 	}
@@ -90,7 +90,7 @@ static ipc_code doOpenIPC_r(int flag) {
 		if (errno == EEXIST) msg_id_r = msgget(key_r, 0 ) ;
 		else 
 		{
-			error(0, errno, "IPC_ERROR_QUEUE");
+			perror("IPC_ERROR_QUEUE");
 			return IPC_ERROR;	
 		}
 	}
@@ -121,7 +121,7 @@ static ipc_code doOpenIPC_b(int flag)
 		}
 		else 
 		{
-			error(0, errno, "IPC_ERROR_KEY");
+			perror("IPC_ERROR_KEY");
 			return IPC_ERROR;	
 		}
 	}
@@ -130,7 +130,7 @@ static ipc_code doOpenIPC_b(int flag)
 		if (errno == EEXIST) msg_id_b = msgget(key_b, 0 ) ;
 		else 
 		{
-			error(0, errno, "IPC_ERROR_QUEUE");
+			perror("IPC_ERROR_QUEUE");
 			return IPC_ERROR;	
 		}
 	}
@@ -177,7 +177,7 @@ ipc_code ReadIPC(mbuf ** msg, mbuf ipcMsg, int msg_id)
 	}
 	if ((*msg = (mbuf * ) malloc (len ) ) == NULL) 
 	{
-		error(0, errno,"malloc_error"); 
+		perror("malloc_error"); 
 	}
 	
 	(void)memmove( *msg, &ipcMsg, len ) ;

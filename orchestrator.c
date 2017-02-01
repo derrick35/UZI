@@ -22,7 +22,7 @@ void *read_thread(void *arg)
 	FILE *fr = popen("./msgclient", "r" ) ; 
 	if ( fr == NULL )
 	{
-		error(0, errno, "THREAD_ERROR_READ");
+		perror("THREAD_ERROR_READ");
 		exit(EXIT_FAILURE);
 	}
 	if ( pclose(fr) == -1) 
@@ -30,6 +30,7 @@ void *read_thread(void *arg)
 		perror("pclose_error");
 	}
 	pthread_exit(NULL);
+	
 }
 
 /* Thread which read from IPC_r and write on IPC_b */
@@ -43,15 +44,17 @@ void *orche_thread(void *arg)
 	
 	if ( (ipcMsg_b = (mbuf*)malloc( sizeof(mbuf)) ) == NULL )
 	{
-		error(0, errno, "THREAD_ERROR_ORCHE_MALLOC");
+		perror("THREAD_ERROR_ORCHE_MALLOC");
 		exit(EXIT_FAILURE);
 	} 	 ;
 	if ( (msg = (mbuf*)malloc( sizeof(mbuf) ) ) == NULL )
 	{
-		error(0, errno, "THREAD_ERROR_ORCHE_MALLOC");
+		perror("THREAD_ERROR_ORCHE_MALLOC");
 		exit(EXIT_FAILURE);
 	} 
 	
+	
+	//while (msg_qnum
 	int i ;
 	for (i = 0; i < 5 ; i = i+1 ) 
 	{
@@ -74,7 +77,7 @@ void *black_thread(void *arg)
 	FILE *fb = popen("./msgserver", "r" ) ;
 	if ( fb == NULL )
 	{
-		error(0, errno, "THREAD_ERROR_BLACK");
+		perror("THREAD_ERROR_BLACK");
 		exit(EXIT_FAILURE);
 	}
 	if ( pclose(fb) == -1 ) { perror("pclose_error"); }
@@ -94,35 +97,35 @@ int main()
 	printf("Launch IPC READ and IPC Black \n");
 	printf("Launch 3 thread \n");
 	
-	/*
+	
 	if (pthread_create(&thread_b, NULL, black_thread, NULL) !=0 ) 
 	{
-		error(0, errno, "THREAD_ERROR_CREATE");
+		perror("THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	
 	}
-	 */
+	 
 	
 	if (pthread_create(&thread_r, NULL , read_thread, NULL) !=0 ) 
 	{
-		error(0, errno, "THREAD_ERROR_CREATE");
+		perror("THREAD_ERROR_CREATE");
 		return THREAD_ERROR ;	
 	}
 	
 	if (pthread_create(&thread_o, NULL, orche_thread, NULL) !=0 ) 
 	{
-		error(0, errno, "THREAD_ERROR_CREATE");
+		perror("THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	
 	}
 	
 	if ( ( pthread_join(thread_o, NULL) ) != 0 ) 
 	{
-		error(0, errno, "THREAD_ERROR_JOIN");
+		perror("THREAD_ERROR_JOIN");
 		return THREAD_ERROR_JOIN ;	
 	}
 		
 	sleep(10);
-	//CloseIPC_b();
-	//CloseIPC_r();
+	CloseIPC_b();
+	CloseIPC_r();
 
 	printf("2 IPC were closed \n");
 	return 0;

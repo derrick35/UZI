@@ -6,12 +6,6 @@
 #include "config.h"
 
 
-
-
-#define NB_THREADS 2
-
-
-
 /* Functions : */
 
 /* In order to obtain a key */
