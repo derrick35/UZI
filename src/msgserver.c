@@ -1,4 +1,4 @@
-﻿#include "config.h"
+﻿#include "../include/lib_uzzi.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -15,6 +15,8 @@ int search_forbidden_site(FILE * file, mbuf *msg)
 	file = fopen("blacklist.txt", "r");
 	char *p_search = NULL; 
 	char ligne[1024] ;
+	char *buffer;
+	 buffer = malloc((MAX_SIZE + 1) * sizeof(char));
 	
 	if ( file != NULL)
 		{
@@ -22,7 +24,8 @@ int search_forbidden_site(FILE * file, mbuf *msg)
 				{
 					if ( ( p_search = strstr(ligne, msg->mtext) ) != NULL)
 						{
-							printf("Forbidden url : %s \n", msg->mtext);
+							snprintf(buffer, MAX_SIZE+1,"Forbidden url : %s \n", msg->mtext);
+							fprintf(stdout,"%s \n", buffer);
 						}
 				}
 		}
