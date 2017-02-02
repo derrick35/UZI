@@ -41,6 +41,7 @@ int main ()
 	mbuf ipcMsg_b;
 	int i ;
 	FILE *file = NULL;
+	int msg_id_b = 1;
 	
 	if ( (msg = (mbuf*)malloc( sizeof(mbuf) ) ) == NULL )
 		{

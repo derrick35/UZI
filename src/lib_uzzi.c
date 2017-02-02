@@ -14,9 +14,27 @@
 #include <error.h>
 #include <errno.h>
 
+/* id message queue for READ PROG*/
+int msg_id_r = 1 ;
+
+/* id message queue for BLACK PROG*/
+int msg_id_b = 1 ;
+
+/* id project for READ PROG */
+int id_read = 46;
+
+/* id project for BLACK PROG */
+int id_black = 57 ;
+
+/* IPC key for READ PROG */
+key_t key_r = 0;
+
+/* IPC key for BLACK PROG */
+key_t key_b = 0 ;
+
 
 /********** In order to open a IPC for READ Programme **********/
-static ipc_code doOpenIPC_r(int flag) 
+ipc_code doOpenIPC_r(int flag) 
 {
 	if ( (key_r = doExtractKey_r() ) == -1 )
 	{
@@ -45,7 +63,7 @@ static ipc_code doOpenIPC_r(int flag)
 
 
 /********** In order to obtain the key value from IPC name for READ PROG **********/
-static key_t doExtractKey_r() 
+key_t doExtractKey_r() 
 {
 	return ftok(IPC_NAME_READ, id_read);
 }
@@ -57,13 +75,13 @@ ipc_code CreateIPC_r()
 }
 
 /********** In order to obtain the key value from IPC name for BLACK Programme **********/
-static key_t doExtractKey_b() 
+key_t doExtractKey_b() 
 {
 	return ftok(IPC_NAME_BLACK, id_black);
 }
 
 /********** In order to open a IPC for BLACK Programme **********/
-static ipc_code doOpenIPC_b(int flag) 
+ipc_code doOpenIPC_b(int flag) 
 {
 	if ( (key_b = doExtractKey_b() ) == -1 )
 	{

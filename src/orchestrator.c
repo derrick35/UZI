@@ -18,7 +18,7 @@ int main()
 {
 	pthread_t thread_r; //thread which will lauch REAG PROG
 	pthread_t thread_b;	// Thread which will launch BLACK PROG
-	pthread_t thread_o;	// Thread which will launch ORCHESTRATOR PROG
+	pthread_t thread_o;	// Thread which will launch ORCHE PROG
 	
 	CreateIPC_r();	
 	CreateIPC_b() ; 

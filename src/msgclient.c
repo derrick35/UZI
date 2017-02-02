@@ -10,7 +10,7 @@
 
 int main () 
 {
-	  
+	int msg_id_r = 1;
 	printf("Envoi de messages vers orchestrator \n");
 	doOpenIPC_r(0);
 	mbuf* ipcMsg_r;
