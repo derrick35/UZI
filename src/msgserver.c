@@ -10,21 +10,45 @@
 #include <error.h>
 #include <errno.h>
 
-int search_forbidden_site(FILE * file, mbuf *msg)
+int search_forbidden_site(FILE * file, squidLog *msg)
 {
-	file = fopen("blacklist.txt", "r");
-	char *p_search = NULL; 
-	char ligne[1024] ;
-	char *buffer;
-	 buffer = malloc((MAX_SIZE + 1) * sizeof(char));
 	
+	file = fopen("blacklist.txt", "r");
+	if ( file == NULL)
+		{
+			perror("file blacklist");
+			exit(EXIT_FAILURE);
+		}
+	char *p_search = NULL; 
+	char *ligne ;
+	char *buffer;
+	
+	if ( (buffer = (char *)malloc((MAX +1) * sizeof(char))) == NULL)
+		{
+			perror("malloc");
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
+	 
+	 if ( (p_search = (char *)malloc((MAX +1) * sizeof(char))) == NULL)
+		{
+			perror("malloc");
+			free(p_search);
+			exit(EXIT_FAILURE);
+		}
+	if ( (ligne = (char *)malloc(1024 * sizeof(char))) == NULL)
+		{
+			perror("malloc");
+			free(ligne);
+			exit(EXIT_FAILURE);
+		}
 	if ( file != NULL)
 		{
-			while( fgets(ligne, MAX_SIZE, file) != NULL )
+			while( fgets(ligne, MAX, file) != NULL )
 				{
-					if ( ( p_search = strstr(ligne, msg->mtext) ) != NULL)
+					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
 						{
-							snprintf(buffer, MAX_SIZE+1,"Forbidden url : %s \n", msg->mtext);
+							snprintf(buffer, MAX +1 ,"Forbidden url : %s \n", msg->urlDest);
 							fprintf(stdout,"%s \n", buffer);
 						}
 				}
@@ -37,13 +61,12 @@ int search_forbidden_site(FILE * file, mbuf *msg)
    
 int main () 
 {
-	mbuf *msg  ;
-	mbuf ipcMsg_b;
+	squidLog *msg  ;
+	squidLog ipcMsg_b;
 	int i ;
 	FILE *file = NULL;
-	int msg_id_b = 1;
 	
-	if ( (msg = (mbuf*)malloc( sizeof(mbuf) ) ) == NULL )
+	if ( (msg = (squidLog*)malloc( sizeof(squidLog) ) ) == NULL )
 		{
 			error(0, errno, "ERROR_BLACK_MALLOC");
 			exit(EXIT_FAILURE);
@@ -55,9 +78,9 @@ int main ()
 		{
 			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
 			sleep(1);
+			
 			search_forbidden_site(file, msg);
-			printf("Lecture par blacklist : %s / %s / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
-	 
+				 
 		}
 	 	
 	free(msg);

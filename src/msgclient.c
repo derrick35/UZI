@@ -10,61 +10,70 @@
 
 int main () 
 {
-	int msg_id_r = 1;
+	
 	printf("Envoi de messages vers orchestrator \n");
 	doOpenIPC_r(0);
-	mbuf* ipcMsg_r;
-	ipcMsg_r = (mbuf*)malloc( sizeof(mbuf) ) ;
+	printf("test \n");
+	squidLog* ipcMsg_r;
+	ipcMsg_r = (squidLog*)malloc( sizeof(squidLog) ) ;
 	
-	mbuf *msg  ;
-	msg = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg->mtype = 42;
-	strlcpy(msg->mtext, "message0", MAX_SIZE);
-	strlcpy(msg->autre, "autrechamp0", 20);
-	strlcpy(msg->ad_IP, "168", 20);
-	WriteIPC(msg, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	
+	squidLog *msg0  ;
+	msg0 = (squidLog*)malloc( sizeof(squidLog) ) ;
+	msg0->mtype = 42 ; 
+	msg0->time = 123456789 ; 
+	strlcpy(msg0->clientIpAdress,"192.168.165.13",LOW_SIZE);
+	strlcpy(msg0->urlDest,"www.cfssi.fr",MAX_SIZE);
+	strlcpy(msg0->user,"Client1",LOW_SIZE);
+	WriteIPC(msg0, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);
-	mbuf *msg1  ;
-	msg1 = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg1->mtype = 42;
-	strlcpy(msg1->mtext, "message1", MAX_SIZE);
-	strlcpy(msg1->autre, "autrechamp1", 20);
-	strlcpy(msg1->ad_IP, "169", 20);
-	WriteIPC(msg1, ipcMsg_r, msg_id_r);
+	
+		
+	squidLog *msg1  ;
+	msg1 = (squidLog*)malloc( sizeof(squidLog) ) ;
+	msg1->mtype = 42 ; 
+	msg1->time = 12345678910 ; 
+	strlcpy(msg1->clientIpAdress,"192.168.165.14",LOW_SIZE);
+	strlcpy(msg1->urlDest,"www.yahoo.fr",MAX_SIZE);
+	strlcpy(msg1->user,"Client2",LOW_SIZE);
+	WriteIPC(msg1, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
+	sleep(2);
 
+	squidLog *msg2  ;
+	msg2 = (squidLog*)malloc( sizeof(squidLog) ) ;
+	msg2->mtype = 42 ; 
+	msg2->time = 12345678911 ; 
+	strlcpy(msg2->clientIpAdress,"192.168.165.15",LOW_SIZE);
+	strlcpy(msg2->urlDest,"www.news.fr",MAX_SIZE);
+	strlcpy(msg2->user,"Client3",LOW_SIZE);
+	WriteIPC(msg2, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);
-	mbuf *msg2  ;
-	msg2 = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg2->mtype = 42;
-	strlcpy(msg2->mtext, "message2", MAX_SIZE);
-	strlcpy(msg2->autre, "autrechamp2", 20);
-	strlcpy(msg2->ad_IP, "170", 20);
-	WriteIPC(msg2, ipcMsg_r, msg_id_r);
 	
+	squidLog *msg3  ;
+	msg3 = (squidLog*)malloc( sizeof(squidLog) ) ;
+	msg3->mtype = 42 ; 
+	msg3->time = 12345678912 ; 
+	strlcpy(msg3->clientIpAdress,"192.168.165.16",LOW_SIZE);
+	strlcpy(msg3->urlDest,"www.voila.fr",MAX_SIZE);
+	strlcpy(msg3->user,"Client4",LOW_SIZE);
+	WriteIPC(msg3, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);
-	mbuf *msg3  ;
-	msg3 = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg3->mtype = 42;
-	strlcpy(msg3->mtext, "message3", MAX_SIZE);
-	strlcpy(msg3->autre, "autrechamp3", 20);
-	strlcpy(msg3->ad_IP, "171", 20);
-	WriteIPC(msg3, ipcMsg_r, msg_id_r);
 	
+	
+	squidLog *msg4  ;
+	msg4 = (squidLog*)malloc( sizeof(squidLog) ) ;
+	msg4->mtype = 6 ; 
+	msg4->time = 12345678913 ; 
+	strlcpy(msg4->clientIpAdress,"192.168.165.17",LOW_SIZE);
+	strlcpy(msg4->urlDest,"www.info.fr",MAX_SIZE);
+	strlcpy(msg4->user,"Client5",LOW_SIZE);
+	WriteIPC(msg4, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);
-	mbuf *msg4  ;
-	msg4 = (mbuf*)malloc( sizeof(mbuf) ) ;
-	msg4->mtype = 42;
-	strlcpy(msg4->mtext, "message4", MAX_SIZE);
-	strlcpy(msg4->autre, " autrechamp4", 20);
-	strlcpy(msg4->ad_IP, "172", 20);
-	WriteIPC(msg4, ipcMsg_r, msg_id_r);
 	
-	
+	printf("fin de l'envoi \n");
 	
 	//Quand on atteint la fin du fichier envoyer un msg->mtype = 6 
 	
-	free(msg);
+	free(msg0);
 	free(msg1);
 	free(msg2);
 	free(msg3);

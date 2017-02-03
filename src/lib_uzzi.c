@@ -33,6 +33,12 @@ key_t key_r = 0;
 key_t key_b = 0 ;
 
 
+/********** In order to obtain the key value from IPC name for READ PROG **********/
+key_t doExtractKey_r() 
+{
+	return ftok(IPC_NAME_READ, id_read);
+}
+
 /********** In order to open a IPC for READ Programme **********/
 ipc_code doOpenIPC_r(int flag) 
 {
@@ -59,13 +65,6 @@ ipc_code doOpenIPC_r(int flag)
 		}
 	}
 	return IPC_SUCCESS;
-}
-
-
-/********** In order to obtain the key value from IPC name for READ PROG **********/
-key_t doExtractKey_r() 
-{
-	return ftok(IPC_NAME_READ, id_read);
 }
 
 /**********   Create  IPC for READ Programme**********/
@@ -130,10 +129,10 @@ int CloseIPC_b()
 
 /********** Orchestrator read message from IPC_r  **********/
 //  Les données dans l'IPC sont copiées dans le message msg
-ipc_code ReadIPC(mbuf ** msg, mbuf ipcMsg, int msg_id) 
+ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id) 
 {
 	ssize_t len = 0 ;  //length of the message
-	(void) memset( &ipcMsg, 0, sizeof(mbuf));
+	(void) memset( &ipcMsg, 0, sizeof(squidLog));
 	
 	if (msg == NULL) 
 		{ 
@@ -145,43 +144,46 @@ ipc_code ReadIPC(mbuf ** msg, mbuf ipcMsg, int msg_id)
 			perror("IPC_ERROR1") ; 
 			exit(EXIT_FAILURE);  
 		}
-	if ( (len = msgrcv(msg_id, (void *) &ipcMsg, sizeof(mbuf) +1, 0, 0) ) == -1) 
+	if ( (len = msgrcv(msg_id, (void *) &ipcMsg, sizeof(squidLog) +1, 0, 0) ) == -1) 
 		{
 			return IPC_ERROR ;
 		}
-	if ((*msg = (mbuf * ) malloc (len ) ) == NULL) 
+	if ((*msg = (squidLog * ) malloc (len ) ) == NULL) 
 		{
 			perror("malloc_error"); 
 		}
 	
 	(void)memmove( *msg, &ipcMsg, len ) ;
 	(*msg)->mtype = ipcMsg.mtype ; 
-	strlcpy((*msg)->mtext,ipcMsg.mtext,MAX_SIZE);
-	strlcpy((*msg)->ad_IP,ipcMsg.ad_IP,20);
-	strlcpy((*msg)->autre,ipcMsg.autre,20);
+	(*msg)->time = ipcMsg.time ; 
+	strlcpy((*msg)->clientIpAdress,ipcMsg.clientIpAdress,LOW_SIZE);
+	strlcpy((*msg)->urlDest,ipcMsg.urlDest,MAX_SIZE);
+	strlcpy((*msg)->user,ipcMsg.user,LOW_SIZE);
+	
 	
 	return IPC_SUCCESS;
 }
 
 /********** Orchestrator write message for IPC_b  **********/
 //Le message msg est copié et envoyé dans l'IPC 
-ipc_code WriteIPC(mbuf *msg, mbuf *ipcMsg, int msg_id) 
+ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id) 
 {
 	if ( msg == NULL )
 		{
 			return IPC_ERROR;
 		}
-	if (  (ipcMsg =  (mbuf * ) malloc(sizeof(mbuf)) ) == NULL )
+	if (  (ipcMsg =  (squidLog * ) malloc(sizeof(squidLog)) ) == NULL )
 		{
 			return IPC_ERROR ;
 		}
 	
 	ipcMsg->mtype = msg->mtype ;
-	strlcpy(ipcMsg->mtext,msg->mtext,MAX_SIZE);
-	strlcpy(ipcMsg->ad_IP,msg->ad_IP, 20);
-	strlcpy(ipcMsg->autre,msg->autre,20);
+	ipcMsg->time = msg->time ;
+	strlcpy(ipcMsg->clientIpAdress,msg->clientIpAdress,LOW_SIZE);
+	strlcpy(ipcMsg->urlDest,msg->urlDest, MAX_SIZE);
+	strlcpy(ipcMsg->user,msg->user,20);
 	
-	if ( (msgsnd(msg_id, ipcMsg, sizeof(mbuf) +1 ,0)) == -1 )
+	if ( (msgsnd(msg_id, ipcMsg, sizeof(squidLog) +1 ,0)) == -1 )
 		{
 			return IPC_ERROR ; 
 		} 
@@ -220,7 +222,7 @@ strlcpy(char *dst, const char *src, size_t dsize)
 void *read_thread(void *arg) 
 {
 	(void) arg ;
-	printf("Begin to send to IPC_r \n");
+	printf("Begin READ \n");
 	FILE *fr = popen("./msgclient", "r" ) ; 
 	if ( fr == NULL )
 		{
@@ -240,39 +242,33 @@ void *read_thread(void *arg)
 void *orche_thread(void *arg) 
 {
 	(void) arg ;
-	mbuf *msg  ;
-	mbuf ipcMsg_r;
-	mbuf *ipcMsg_b;
+	squidLog *msg  ;
+	squidLog ipcMsg_r;
+	squidLog *ipcMsg_b;
 	
-	if ( (ipcMsg_b = (mbuf*)malloc( sizeof(mbuf)) ) == NULL )
+	if ( (ipcMsg_b = (squidLog*)malloc( sizeof(squidLog)) ) == NULL )
 		{
 			perror("THREAD_ERROR_ORCHE_MALLOC");
 			exit(EXIT_FAILURE);
 		} 	 ;
-	if ( (msg = (mbuf*)malloc( sizeof(mbuf) ) ) == NULL )
+	if ( (msg = (squidLog*)malloc( sizeof(squidLog) ) ) == NULL )
 		{
 			perror("THREAD_ERROR_ORCHE_MALLOC");
 			exit(EXIT_FAILURE);
 		} 
 	
-	/*	do
-	 	{
+	 printf("Begin orche \n");
+	 //int i ;
+	 do
+	 {
+	//for (i = 0; i < 5 ; i = i+1 ) 
+		//{
 			ReadIPC(&msg, ipcMsg_r, msg_id_r);
-			printf("Reception sur orchestrator : %s / %s / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
-		
+			printf("Reception sur orchestrator : %s / %s / %s \n",msg->clientIpAdress, msg->urlDest, msg->user); 
 			WriteIPC(msg, ipcMsg_b, msg_id_b);	
-		}	while (msg.mtext != 6);
-	
-	 */
-	 
-	 int i ;
-	for (i = 0; i < 5 ; i = i+1 ) 
-		{
-			ReadIPC(&msg, ipcMsg_r, msg_id_r);
-			printf("Reception sur orchestrator : %s / %s / %s \n",msg->mtext, msg->ad_IP, msg->autre); 
-		
-			WriteIPC(msg, ipcMsg_b, msg_id_b);	
-		}
+			
+		//}
+	} while (msg->mtype != 6); //Un mtype égal à 6 indique qu'il n'y a plus de message à lire
 	
 	free(msg);
 	free(ipcMsg_b);
@@ -284,7 +280,7 @@ void *orche_thread(void *arg)
 void *black_thread(void *arg) 
 {
 	(void) arg ;
-	printf("Begin reception on Blacklist \n");
+	printf("Begin BLACK \n");
 	FILE *fb = popen("./msgserver", "r" ) ;
 	if ( fb == NULL )
 	{

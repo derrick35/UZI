@@ -14,6 +14,8 @@
 #include <error.h>
 #include <errno.h>
 
+
+
 int main()
 {
 	pthread_t thread_r; //thread which will lauch REAG PROG
@@ -31,7 +33,7 @@ int main()
 	{
 		perror("THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	
-	}
+	}	
 	 
 	
 	if (pthread_create(&thread_r, NULL , read_thread, NULL) !=0 ) 
