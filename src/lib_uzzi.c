@@ -46,7 +46,7 @@ ipc_code doOpenIPC_r(int flag)
 	{
 		if (errno == ENOENT ) 
 		{
-			open("/tmp/squid_data", O_RDWR | O_CREAT | O_APPEND ) ;
+			open(IPC_NAME_READ, O_RDWR | O_CREAT | O_APPEND ) ;
 			key_r =   doExtractKey_r() ;
 		}
 		else 
@@ -57,7 +57,10 @@ ipc_code doOpenIPC_r(int flag)
 	}
 	if ( (msg_id_r = msgget(key_r, flag ) ) == -1 )  /* Create a message queue */
 	{
-		if (errno == EEXIST) msg_id_r = msgget(key_r, 0 ) ;
+		if (errno == EEXIST)
+		{ 
+			msg_id_r = msgget(key_r, 0 ) ;
+		}
 		else 
 		{
 			perror("IPC_ERROR_QUEUE");
@@ -86,7 +89,7 @@ ipc_code doOpenIPC_b(int flag)
 	{
 		if (errno == ENOENT ) 
 			{
-				open("/tmp/black_data", O_RDWR | O_CREAT | O_APPEND ) ;
+				open(IPC_NAME_BLACK, O_RDWR | O_CREAT | O_APPEND ) ;
 				key_b =  doExtractKey_b();
 			}
 		else 
@@ -141,16 +144,17 @@ ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id)
 		}
 	if ( *msg == NULL) 
 		{ 
-			perror("IPC_ERROR1") ; 
+			perror("IPC_ERROR") ; 
 			exit(EXIT_FAILURE);  
 		}
 	if ( (len = msgrcv(msg_id, (void *) &ipcMsg, sizeof(squidLog) +1, 0, 0) ) == -1) 
 		{
 			return IPC_ERROR ;
 		}
-	if ((*msg = (squidLog * ) malloc (len ) ) == NULL) 
+	if ((*msg = (squidLog * ) calloc (1,len ) ) == NULL) 
 		{
-			perror("malloc_error"); 
+			perror("calloc_error");
+			exit(EXIT_FAILURE); 
 		}
 	
 	(void)memmove( *msg, &ipcMsg, len ) ;
@@ -172,7 +176,7 @@ ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id)
 		{
 			return IPC_ERROR;
 		}
-	if (  (ipcMsg =  (squidLog * ) malloc(sizeof(squidLog)) ) == NULL )
+	if (  (ipcMsg =  (squidLog * ) calloc(1,sizeof(squidLog)) ) == NULL )
 		{
 			return IPC_ERROR ;
 		}
@@ -181,7 +185,7 @@ ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id)
 	ipcMsg->time = msg->time ;
 	strlcpy(ipcMsg->clientIpAdress,msg->clientIpAdress,LOW_SIZE);
 	strlcpy(ipcMsg->urlDest,msg->urlDest, MAX_SIZE);
-	strlcpy(ipcMsg->user,msg->user,20);
+	strlcpy(ipcMsg->user,msg->user,LOW_SIZE);
 	
 	if ( (msgsnd(msg_id, ipcMsg, sizeof(squidLog) +1 ,0)) == -1 )
 		{
@@ -197,6 +201,20 @@ strlcpy(char *dst, const char *src, size_t dsize)
 {
 	const char *osrc = src;
 	size_t nleft = dsize;
+	/*
+	if ( (osrc = (char *)calloc( 1, sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(osrc);
+			exit(EXIT_FAILURE);
+		}
+		
+	if ( (dst = (char *)calloc( 1, sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(dst);
+			exit(EXIT_FAILURE);
+		}	*/
 
 	/* Copy as many bytes as will fit. */
 	if (nleft != 0) {
@@ -218,20 +236,21 @@ strlcpy(char *dst, const char *src, size_t dsize)
 }
 
 
-/* Thread which launch the msgclient PROG  */
+/* Thread which launch the READ Programme  */
 void *read_thread(void *arg) 
 {
 	(void) arg ;
 	printf("Begin READ \n");
-	FILE *fr = popen("./msgclient", "r" ) ; 
+	FILE *fr = popen(PROG_READ, "r" ) ; 
 	if ( fr == NULL )
 		{
-			perror("THREAD_ERROR_READ");
+			perror("popen_read_error");
 			exit(EXIT_FAILURE);
 		}
 	if ( pclose(fr) == -1) 
 		{ 
 			perror("pclose_error");
+			exit(EXIT_FAILURE);
 		}
 	pthread_exit(NULL);
 	
@@ -246,14 +265,14 @@ void *orche_thread(void *arg)
 	squidLog ipcMsg_r;
 	squidLog *ipcMsg_b;
 	
-	if ( (ipcMsg_b = (squidLog*)malloc( sizeof(squidLog)) ) == NULL )
+	if ( (ipcMsg_b = (squidLog*)calloc( 1 , sizeof(squidLog)) ) == NULL )
 		{
-			perror("THREAD_ERROR_ORCHE_MALLOC");
+			perror("THREAD_ERROR_ORCHE_CALLOC");
 			exit(EXIT_FAILURE);
 		} 	 ;
-	if ( (msg = (squidLog*)malloc( sizeof(squidLog) ) ) == NULL )
+	if ( (msg = (squidLog*)calloc(1 , sizeof(squidLog) ) ) == NULL )
 		{
-			perror("THREAD_ERROR_ORCHE_MALLOC");
+			perror("THREAD_ERROR_ORCHE_CALLOC");
 			exit(EXIT_FAILURE);
 		} 
 	
@@ -266,6 +285,7 @@ void *orche_thread(void *arg)
 			ReadIPC(&msg, ipcMsg_r, msg_id_r);
 			printf("Reception sur orchestrator : %s / %s / %s \n",msg->clientIpAdress, msg->urlDest, msg->user); 
 			WriteIPC(msg, ipcMsg_b, msg_id_b);	
+			
 			
 		//}
 	} while (msg->mtype != 6); //Un mtype égal à 6 indique qu'il n'y a plus de message à lire
@@ -281,13 +301,17 @@ void *black_thread(void *arg)
 {
 	(void) arg ;
 	printf("Begin BLACK \n");
-	FILE *fb = popen("./msgserver", "r" ) ;
+	FILE *fb = popen(PROG_BLACK, "r" ) ;
 	if ( fb == NULL )
 	{
-		perror("THREAD_ERROR_BLACK");
+		perror("popen_black_error");
 		exit(EXIT_FAILURE);
 	}
-	if ( pclose(fb) == -1 ) { perror("pclose_error"); }
+	if ( pclose(fb) == -1 ) 
+	{ 
+		perror("pclose_error"); 
+		exit(EXIT_FAILURE);
+	}
 	
 	pthread_exit(NULL);
 }

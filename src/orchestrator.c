@@ -15,12 +15,11 @@
 #include <errno.h>
 
 
-
 int main()
 {
-	pthread_t thread_r; //thread which will lauch REAG PROG
-	pthread_t thread_b;	// Thread which will launch BLACK PROG
-	pthread_t thread_o;	// Thread which will launch ORCHE PROG
+	pthread_t thread_r; /* identify thread who will launch REAG PROG */
+	pthread_t thread_b;	/* identify thread who will launch BLACK PROG */
+	pthread_t thread_o;	/* identify thread who will launch ORCHESTRATOR PROG */
 	
 	CreateIPC_r();	
 	CreateIPC_b() ; 
@@ -53,9 +52,12 @@ int main()
 			perror("THREAD_ERROR_JOIN");
 			return THREAD_ERROR_JOIN ;	
 		}
-		
+	pthread_detach(thread_r);
+	pthread_detach(thread_o);
+	pthread_detach(thread_b);
+
 	sleep(10);
-	CloseIPC_b();
+	//CloseIPC_b();
 	CloseIPC_r();
 
 	printf("2 IPC were closed \n");

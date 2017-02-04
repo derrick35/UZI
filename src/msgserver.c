@@ -13,7 +13,7 @@
 int search_forbidden_site(FILE * file, squidLog *msg)
 {
 	
-	file = fopen("blacklist.txt", "r");
+	file = fopen(FILE_BLACK, "r");
 	if ( file == NULL)
 		{
 			perror("file blacklist");
@@ -23,22 +23,22 @@ int search_forbidden_site(FILE * file, squidLog *msg)
 	char *ligne ;
 	char *buffer;
 	
-	if ( (buffer = (char *)malloc((MAX +1) * sizeof(char))) == NULL)
+	if ( (buffer = (char *)calloc((MAX +1) , sizeof(char))) == NULL)
 		{
-			perror("malloc");
+			perror("calloc");
 			free(buffer);
 			exit(EXIT_FAILURE);
 		}
 	 
-	 if ( (p_search = (char *)malloc((MAX +1) * sizeof(char))) == NULL)
+	 if ( (p_search = (char *)calloc((MAX +1) , sizeof(char))) == NULL)
 		{
-			perror("malloc");
+			perror("calloc");
 			free(p_search);
 			exit(EXIT_FAILURE);
 		}
-	if ( (ligne = (char *)malloc(1024 * sizeof(char))) == NULL)
+	if ( (ligne = (char *)calloc(MAX , sizeof(char))) == NULL)
 		{
-			perror("malloc");
+			perror("calloc");
 			free(ligne);
 			exit(EXIT_FAILURE);
 		}
@@ -54,6 +54,8 @@ int search_forbidden_site(FILE * file, squidLog *msg)
 				}
 		}
 		
+	
+	free(p_search);
 	fclose(file);
 	return 0;
 }
@@ -63,25 +65,25 @@ int main ()
 {
 	squidLog *msg  ;
 	squidLog ipcMsg_b;
-	int i ;
+	
 	FILE *file = NULL;
 	
-	if ( (msg = (squidLog*)malloc( sizeof(squidLog) ) ) == NULL )
+	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
 		{
-			error(0, errno, "ERROR_BLACK_MALLOC");
+			perror("ERROR_BLACK_CALLOC");
 			exit(EXIT_FAILURE);
 		} 
 	
 	doOpenIPC_b(0);
 	
-	for (i = 0; i < 5 ; i = i+1 ) 
+	do
 		{
 			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
 			sleep(1);
 			
 			search_forbidden_site(file, msg);
 				 
-		}
+		}  while (msg->mtype != 6);
 	 	
 	free(msg);
 	

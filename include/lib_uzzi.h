@@ -7,13 +7,17 @@
 #include <sys/msg.h>
 
 
-/**********  ERROR MANAGEMENT   **********/
+/* *************************************************** */
+/* **************  ERROR MANAGEMENT   *************** */
+/* *************************************************** */
 typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
 
 typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } thread_code ;
 
 
+/* *********************************************************************** */
 /* Programmes configuration for PROG READ, BLACKLIST and ORCHESTRATOR. */
+/* ********************************************************************** */
 
 #define MAX 1024
 
@@ -29,12 +33,25 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 /*  Name of IPC, file must exist and reachable */
 #define IPC_NAME_BLACK "/tmp/black_data"
 
+/* Name of the READ executable */
+#define PROG_READ "./msgclient"
+
+/* Name of the BLACK executable */
+#define PROG_BLACK "./msgserver"
+
+/* Name of the Blacklist file */
+#define FILE_BLACK "blacklist.txt"
+
 /* Read can write message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0666 
+#define DEFAULT_IPC_PERM_READ  0622 
 
 /* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0666 
+#define DEFAULT_IPC_PERM_BLACK  0644
 
+
+/* ********************************************* */
+/* Name of the variables used by the programmes */
+/* ********************************************* */
 
 /* id message queue for READ PROG*/
 int msg_id_r ;
@@ -55,10 +72,9 @@ key_t key_r ;
 key_t key_b ;
 
 
-
-
-
-/********** Structure of a message **********/
+/* ***************************************** */
+/* ********* Structure of a message **********/
+/* ***************************************** */
 typedef struct {  
 	long 	mtype;
 	long 	time ;
@@ -67,19 +83,21 @@ typedef struct {
 	char 	resultCodes[MIDDLE_SIZE];
 	int 	bytes;
 	char 	method[LOW_SIZE] ; 
-	char 	urlDest[MAX_SIZE]; 	/* type of message */
-	char 	user[LOW_SIZE];		/* IP address */
+	char 	urlDest[MAX_SIZE]; 			/* type of message */
+	char 	user[LOW_SIZE];				/* IP address */
 	char 	hostCode[MIDDLE_SIZE];	
 	char	type[MIDDLE_SIZE];	
 } squidLog;
 
 
-/* Functions : */
+/* ****************************/
+/* ******* Functions ******** */
+/* ************************** */
 
 /* In order to obtain a key */
 key_t doExtractKey_r();
 
-/* Error management */
+/* OPen IPC for READ PROG */
 ipc_code doOpenIPC_r(int flag);
 
 /* Obtain a key and create a new message queue with error management */
@@ -103,13 +121,13 @@ ipc_code WriteIPC(squidLog *msg, squidLog* ipcMsg_b, int msg_id) ;
 /* Definition of strlcpy function from BSD */
 size_t strlcpy(char *dst, const char *src, size_t dsize);
 
-
+/* Launch Thread of the READ PROG */
 void *read_thread(void *arg) ;
 
-
+/* Launch Thread of the ORCHESTRATOR PROG */
 void *orche_thread(void *arg);
 
-
+/* Launch Thread of the BLACK PROG */
 void *black_thread(void *arg) ;
 
 
