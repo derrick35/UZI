@@ -60,10 +60,10 @@ int msg_id_r ;
 int msg_id_b ;
 
 /* id project for READ PROG */
-int id_read ;
+const int id_read ;
 
 /* id project for BLACK PROG */
-int id_black ;
+const int id_black ;
 
 /* IPC key for READ PROG */
 key_t key_r ;

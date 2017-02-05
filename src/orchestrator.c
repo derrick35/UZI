@@ -20,6 +20,9 @@ int main()
 	pthread_t thread_r; /* identify thread who will launch REAG PROG */
 	pthread_t thread_b;	/* identify thread who will launch BLACK PROG */
 	pthread_t thread_o;	/* identify thread who will launch ORCHESTRATOR PROG */
+	pthread_attr_t thread_attr_b;
+	pthread_attr_t thread_attr_r;
+	
 	
 	CreateIPC_r();	
 	CreateIPC_b() ; 
@@ -27,15 +30,36 @@ int main()
 	printf("Launch IPC READ and IPC Black \n");
 	printf("Launch 3 thread \n");
 	
-	
-	if (pthread_create(&thread_b, NULL, black_thread, NULL) !=0 ) 
+	if (pthread_attr_init(&thread_attr_b) != 0)
 	{
-		perror("THREAD_ERROR_CREATE");
-			return THREAD_ERROR;	
-	}	
-	 
+		perror("pthread_attr_init error");
+		exit(EXIT_FAILURE);
+	}
+	if (pthread_attr_setdetachstate(&thread_attr_b, PTHREAD_CREATE_DETACHED) != 0)
+	{
+		perror("pthread_attr_setdetachstate error");
+		exit(EXIT_FAILURE);
+	}
 	
-	if (pthread_create(&thread_r, NULL , read_thread, NULL) !=0 ) 
+	if (pthread_attr_init(&thread_attr_r) != 0)
+	{
+		perror("pthread_attr_init error");
+		exit(EXIT_FAILURE);
+	}
+	if (pthread_attr_setdetachstate(&thread_attr_r, PTHREAD_CREATE_DETACHED) != 0)
+	{
+		perror("pthread_attr_setdetachstate error");
+		exit(EXIT_FAILURE);
+	}
+	/*
+	if (pthread_create(&thread_b, &thread_attr_b, black_thread, NULL) !=0 ) 
+		{
+			perror("THREAD_ERROR_CREATE");
+			return THREAD_ERROR;	
+		}	
+	 */
+	
+	if (pthread_create(&thread_r, &thread_attr_r , read_thread, NULL) !=0 ) 
 		{
 			perror("THREAD_ERROR_CREATE");
 			return THREAD_ERROR ;	
@@ -52,11 +76,10 @@ int main()
 			perror("THREAD_ERROR_JOIN");
 			return THREAD_ERROR_JOIN ;	
 		}
-	pthread_detach(thread_r);
-	pthread_detach(thread_o);
-	pthread_detach(thread_b);
+		
+	
 
-	sleep(10);
+	sleep(5);
 	//CloseIPC_b();
 	CloseIPC_r();
 

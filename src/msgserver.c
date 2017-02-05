@@ -9,20 +9,55 @@
 #include <unistd.h>
 #include <error.h>
 #include <errno.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
-int search_forbidden_site(FILE * file, squidLog *msg)
+
+int search_forbidden_site(FILE *file, squidLog *msg)
 {
-	
-	file = fopen(FILE_BLACK, "r");
-	if ( file == NULL)
-		{
-			perror("file blacklist");
-			exit(EXIT_FAILURE);
-		}
-	char *p_search = NULL; 
 	char *ligne ;
 	char *buffer;
+	char *p_search; 
 	
+	if ( (ligne = (char *)calloc(MAX  , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(ligne);
+			exit(EXIT_FAILURE);
+		}
+	if ( (buffer = (char *)calloc(MAX  , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
+		
+	 if ( (p_search = (char *)calloc(MAX  , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(p_search);
+			exit(EXIT_FAILURE);
+		}
+		printf("test");
+
+	while( fgets(ligne, MAX , file) != NULL )
+		{
+			if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
+				{
+					snprintf(buffer, MAX +1 ,"Forbidden url : %s \n", msg->urlDest);
+					fprintf(stdout,"%s \n", buffer);
+				}
+		}
+	
+	
+		//free(p_search);
+		//free(ligne);
+		//free(buffer);
+		return 0;
+	
+	
+	//char *p_search = NULL; 	char *ligne ;	char *buffer;
+	/*
 	if ( (buffer = (char *)calloc((MAX +1) , sizeof(char))) == NULL)
 		{
 			perror("calloc");
@@ -57,22 +92,52 @@ int search_forbidden_site(FILE * file, squidLog *msg)
 	
 	free(p_search);
 	fclose(file);
-	return 0;
+	return 0; */
 }
 
    
 int main () 
 {
+	
+	fprintf(stdout,"essai");
 	squidLog *msg  ;
-	squidLog ipcMsg_b;
-	
-	FILE *file = NULL;
-	
 	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
 		{
 			perror("ERROR_BLACK_CALLOC");
 			exit(EXIT_FAILURE);
 		} 
+	squidLog ipcMsg_b;
+	fprintf(stdout,"test0");
+	FILE *projection ;
+	struct stat state_file;
+	long length_file;
+	int file;
+	file = open(FILE_BLACK, O_RDONLY);
+	if (file < 0)
+	{
+		perror("open");
+		exit(EXIT_FAILURE);
+	}
+	
+	if ( fstat(file, &state_file) != 0)
+	{
+		perror("stat");
+		exit(EXIT_FAILURE);
+	}
+	length_file = state_file.st_size;
+	
+	projection = (FILE *) mmap(NULL, length_file, PROT_READ | PROT_WRITE, MAP_PRIVATE, file, 0);
+	
+	if (projection ==  MAP_FAILED)
+	{
+		error(0, errno, "mmmap");
+		perror("mmap");
+		exit(EXIT_FAILURE);
+	} 
+	
+	if (close (file) == -1) perror("close");
+	printf("test1");
+
 	
 	doOpenIPC_b(0);
 	
@@ -81,12 +146,14 @@ int main ()
 			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
 			sleep(1);
 			
-			search_forbidden_site(file, msg);
+			search_forbidden_site(projection, msg);
 				 
 		}  while (msg->mtype != 6);
-	 	
-	free(msg);
+	 
+	munmap((FILE *) projection, length_file);
 	
+	free(msg);
+		
 	return 0;
 	
 }

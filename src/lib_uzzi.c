@@ -14,6 +14,11 @@
 #include <error.h>
 #include <errno.h>
 
+
+/* ********************************************************** */
+/* *************** Initialisation of variables ************** */
+/* ********************************************************** */
+
 /* id message queue for READ PROG*/
 int msg_id_r = 1 ;
 
@@ -21,10 +26,10 @@ int msg_id_r = 1 ;
 int msg_id_b = 1 ;
 
 /* id project for READ PROG */
-int id_read = 46;
+const int id_read = 46;
 
 /* id project for BLACK PROG */
-int id_black = 57 ;
+const int id_black = 57 ;
 
 /* IPC key for READ PROG */
 key_t key_r = 0;
@@ -33,13 +38,17 @@ key_t key_r = 0;
 key_t key_b = 0 ;
 
 
-/********** In order to obtain the key value from IPC name for READ PROG **********/
+/* ****************************************************************************************** */
+/* ***************In order to obtain the key value from IPC name for READ PROG ************** */
+/* ****************************************************************************************** */
 key_t doExtractKey_r() 
 {
 	return ftok(IPC_NAME_READ, id_read);
 }
 
-/********** In order to open a IPC for READ Programme **********/
+/* *********************************************************************** */
+/* ***************In order to open a IPC for READ Programme ************** */
+/* *********************************************************************** */
 ipc_code doOpenIPC_r(int flag) 
 {
 	if ( (key_r = doExtractKey_r() ) == -1 )
@@ -70,19 +79,25 @@ ipc_code doOpenIPC_r(int flag)
 	return IPC_SUCCESS;
 }
 
-/**********   Create  IPC for READ Programme**********/
+/* ************************************************************* */
+/* *************** Create  IPC for READ Programme ************** */
+/* ************************************************************* */
 ipc_code CreateIPC_r() 
 {
 	return doOpenIPC_r(IPC_CREAT  | DEFAULT_IPC_PERM_READ ) ;
 }
 
-/********** In order to obtain the key value from IPC name for BLACK Programme **********/
+/* ************************************************************************************************** */
+/* *************** In order to obtain the key value from IPC name for BLACK Programme  ************** */
+/* ************************************************************************************************** */
 key_t doExtractKey_b() 
 {
 	return ftok(IPC_NAME_BLACK, id_black);
 }
 
-/********** In order to open a IPC for BLACK Programme **********/
+/* ************************************************************************* */
+/* *************** In order to open a IPC for BLACK Programme ************** */
+/* ************************************************************************* */
 ipc_code doOpenIPC_b(int flag) 
 {
 	if ( (key_b = doExtractKey_b() ) == -1 )
@@ -113,13 +128,17 @@ ipc_code doOpenIPC_b(int flag)
 	return IPC_SUCCESS;
 }
 
-/**********   Create  IPC for READ Programme**********/
+/* ************************************************************** */
+/* *************** Create  IPC for BLACK Programme ************** */
+/* ************************************************************** */
 ipc_code CreateIPC_b() 
 {
 	return doOpenIPC_b(IPC_CREAT  | DEFAULT_IPC_PERM_BLACK) ;
 }
 
-/**********   Close the IPC  *********/
+/* ******************************************** */
+/* *************** Close the IPC ************** */
+/* ******************************************** */
 int CloseIPC_r() 
 {
 	return msgctl(msg_id_r, IPC_RMID, NULL);
@@ -130,8 +149,10 @@ int CloseIPC_b()
 	return msgctl(msg_id_b, IPC_RMID, NULL);
 }
 
-/********** Orchestrator read message from IPC_r  **********/
-//  Les données dans l'IPC sont copiées dans le message msg
+/* ********************************************************************* */
+/* ***************  Orchestrator read message from IPC  ************** */
+/* ********************************************************************* */
+/* Data from IPC are written in the message msg */
 ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id) 
 {
 	ssize_t len = 0 ;  //length of the message
@@ -168,18 +189,21 @@ ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id)
 	return IPC_SUCCESS;
 }
 
-/********** Orchestrator write message for IPC_b  **********/
-//Le message msg est copié et envoyé dans l'IPC 
+/* ********************************************************************* */
+/* ***************  Orchestrator write message for IPC  ************** */
+/* ********************************************************************* */
+/* Data are written and sent to IPC */
 ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id) 
 {
-	if ( msg == NULL )
-		{
-			return IPC_ERROR;
-		}
 	if (  (ipcMsg =  (squidLog * ) calloc(1,sizeof(squidLog)) ) == NULL )
 		{
 			return IPC_ERROR ;
 		}
+	if (  msg == NULL )
+		{
+			return IPC_ERROR ;
+		}
+	
 	
 	ipcMsg->mtype = msg->mtype ;
 	ipcMsg->time = msg->time ;
@@ -195,9 +219,10 @@ ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id)
 	return IPC_SUCCESS;
 }
 
-
-size_t
-strlcpy(char *dst, const char *src, size_t dsize)
+/* ********************************************************************* */
+/* ***************  Function from BSD environment ************** */
+/* ********************************************************************* */
+size_t strlcpy(char *dst, const char *src, size_t dsize)
 {
 	const char *osrc = src;
 	size_t nleft = dsize;
@@ -235,8 +260,9 @@ strlcpy(char *dst, const char *src, size_t dsize)
 	return(src - osrc - 1);	/* count does not include NUL */
 }
 
-
-/* Thread which launch the READ Programme  */
+/* *********************************************************************** */
+/* ***************  Thread which launch the READ Programme  ************** */
+/* *********************************************************************** */
 void *read_thread(void *arg) 
 {
 	(void) arg ;
@@ -256,8 +282,9 @@ void *read_thread(void *arg)
 	
 }
 
-/* Thread which read from IPC_r and write on IPC_b */
-
+/* ********************************************************************************* */
+/* ***************  Thread which read from IPC_r and write on IPC_b   ************** */
+/* ********************************************************************************* */
 void *orche_thread(void *arg) 
 {
 	(void) arg ;
@@ -296,7 +323,9 @@ void *orche_thread(void *arg)
 	
 }
 
-/* Thread which launch the msgserver PROG  */
+/* ************************************************************************ */
+/* ***************  Thread which launch the BLACK Programme  ************** */
+/* ************************************************************************ */
 void *black_thread(void *arg) 
 {
 	(void) arg ;
