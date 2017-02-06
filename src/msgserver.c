@@ -17,38 +17,42 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 {
 	char *ligne ;
 	char *buffer;
-	char *p_search; 
+	char *p_search = NULL; 
 	
-	if ( (ligne = (char *)calloc(MAX  , sizeof(char))) == NULL)
+	if ( (ligne = (char *)calloc( 1024  , sizeof(char))) == NULL)
 		{
 			perror("calloc");
 			free(ligne);
 			exit(EXIT_FAILURE);
 		}
-	if ( (buffer = (char *)calloc(MAX  , sizeof(char))) == NULL)
+	if ( (buffer = (char *)calloc(256 , sizeof(char))) == NULL)
 		{
 			perror("calloc");
 			free(buffer);
 			exit(EXIT_FAILURE);
 		}
 		
-	 if ( (p_search = (char *)calloc(MAX  , sizeof(char))) == NULL)
+	 if ( (p_search = (char *)calloc(256  , sizeof(char))) == NULL)
 		{
 			perror("calloc");
 			free(p_search);
 			exit(EXIT_FAILURE);
-		}
-		printf("test");
-
-	while( fgets(ligne, MAX , file) != NULL )
-		{
+		} 
+		printf("test \n");
+	
+	if (file != NULL)
+	{
+	while( fgets(ligne, 1030 , file) != NULL )
+		{	printf("on rentre dans fgets \n");
 			if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
 				{
-					snprintf(buffer, MAX +1 ,"Forbidden url : %s \n", msg->urlDest);
+					printf("on rentre dans p_search \n");
+					snprintf(buffer, 256 ,"Forbidden url : %s \n", msg->urlDest);
 					fprintf(stdout,"%s \n", buffer);
 				}
 		}
-	
+	}
+	printf("essai \n");
 	
 		//free(p_search);
 		//free(ligne);
@@ -99,7 +103,6 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 int main () 
 {
 	
-	fprintf(stdout,"essai");
 	squidLog *msg  ;
 	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
 		{
@@ -107,7 +110,6 @@ int main ()
 			exit(EXIT_FAILURE);
 		} 
 	squidLog ipcMsg_b;
-	fprintf(stdout,"test0");
 	FILE *projection ;
 	struct stat state_file;
 	long length_file;
@@ -130,15 +132,13 @@ int main ()
 	
 	if (projection ==  MAP_FAILED)
 	{
-		error(0, errno, "mmmap");
+		error(0, errno, "mmap");
 		perror("mmap");
 		exit(EXIT_FAILURE);
 	} 
 	
-	if (close (file) == -1) perror("close");
-	printf("test1");
-
-	
+	if (close(file) == -1) perror("close");
+		
 	doOpenIPC_b(0);
 	
 	do
