@@ -12,108 +12,17 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-
-int search_forbidden_site(FILE *file, squidLog *msg)
+/*
+int search_forbidden_site(int file, squidLog *msg)
 {
 	char *ligne ;
 	char *buffer;
 	char *p_search = NULL; 
+	FILE *projection;
 	
-	if ( (ligne = (char *)calloc( 1024  , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(ligne);
-			exit(EXIT_FAILURE);
-		}
-	if ( (buffer = (char *)calloc(256 , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(buffer);
-			exit(EXIT_FAILURE);
-		}
-		
-	 if ( (p_search = (char *)calloc(256  , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(p_search);
-			exit(EXIT_FAILURE);
-		} 
-		printf("test \n");
-	
-	if (file != NULL)
-	{
-	while( fgets(ligne, 1030 , file) != NULL )
-		{	printf("on rentre dans fgets \n");
-			if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
-				{
-					printf("on rentre dans p_search \n");
-					snprintf(buffer, 256 ,"Forbidden url : %s \n", msg->urlDest);
-					fprintf(stdout,"%s \n", buffer);
-				}
-		}
-	}
-	printf("essai \n");
-	
-		//free(p_search);
-		//free(ligne);
-		//free(buffer);
-		return 0;
-	
-	
-	//char *p_search = NULL; 	char *ligne ;	char *buffer;
-	/*
-	if ( (buffer = (char *)calloc((MAX +1) , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(buffer);
-			exit(EXIT_FAILURE);
-		}
-	 
-	 if ( (p_search = (char *)calloc((MAX +1) , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(p_search);
-			exit(EXIT_FAILURE);
-		}
-	if ( (ligne = (char *)calloc(MAX , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(ligne);
-			exit(EXIT_FAILURE);
-		}
-	if ( file != NULL)
-		{
-			while( fgets(ligne, MAX, file) != NULL )
-				{
-					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
-						{
-							snprintf(buffer, MAX +1 ,"Forbidden url : %s \n", msg->urlDest);
-							fprintf(stdout,"%s \n", buffer);
-						}
-				}
-		}
-		
-	
-	free(p_search);
-	fclose(file);
-	return 0; */
-}
-
-   
-int main () 
-{
-	
-	squidLog *msg  ;
-	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
-		{
-			perror("ERROR_BLACK_CALLOC");
-			exit(EXIT_FAILURE);
-		} 
-	squidLog ipcMsg_b;
-	FILE *projection ;
 	struct stat state_file;
 	long length_file;
-	int file;
+	
 	file = open(FILE_BLACK, O_RDONLY);
 	if (file < 0)
 	{
@@ -137,8 +46,141 @@ int main ()
 		exit(EXIT_FAILURE);
 	} 
 	
-	if (close(file) == -1) perror("close");
+	if ( (ligne = (char *)calloc( 1024  , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(ligne);
+			exit(EXIT_FAILURE);
+		}
+	if ( (buffer = (char *)calloc( MAX_SIZE +1 , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
 		
+	 if ( (p_search = (char *)calloc(MAX_SIZE +1  , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(p_search);
+			exit(EXIT_FAILURE);
+		} 
+		printf("test \n");
+	
+	if (projection != NULL)
+	{
+	while( fgets(ligne, MAX_SIZE , projection) != NULL )
+		{			printf("test1");
+			if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
+				{
+					printf("on rentre dans p_search \n");
+					snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \n", msg->urlDest);
+					fprintf(stdout,"%s \n", buffer);
+				}
+		}
+	}
+	
+	
+		free(p_search);
+		//free(ligne);
+		free(buffer);
+		munmap((FILE *) projection, length_file);
+		return 0;
+	
+	
+
+}
+   
+int main () 
+{
+	squidLog *msg  ;
+	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
+		{
+			perror("ERROR_BLACK_CALLOC");
+			exit(EXIT_FAILURE);
+		} 
+	squidLog ipcMsg_b;
+	int file = 0 ;
+	doOpenIPC_b(0);
+	do
+		{
+			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
+			sleep(1);
+			
+			search_forbidden_site(file, msg);
+				 
+		}  while (msg->mtype != 6);
+	 
+	free(msg);
+		
+	return 0;
+	
+}		*/
+
+
+int search_forbidden_site(FILE *file, squidLog *msg)
+{
+	char *p_search = NULL; 	
+	char *ligne ;	
+	char *buffer;
+	
+	
+	file = fopen(FILE_BLACK, "r");
+	if (file == NULL)
+	{
+		perror("open");
+		exit(EXIT_FAILURE);
+	}
+	
+	if ( (buffer = (char *)calloc((MAX_SIZE +1 ) , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
+	 
+	 if ( (p_search = (char *)calloc((MAX_SIZE +1) , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(p_search);
+			exit(EXIT_FAILURE);
+		}
+	if ( (ligne = (char *)calloc(1024 , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(ligne);
+			exit(EXIT_FAILURE);
+		}
+	if ( file != NULL)
+		{
+			while( fgets(ligne, MAX_SIZE , file) != NULL )
+				{
+					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
+						{
+							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \n", msg->urlDest);
+							fprintf(stdout,"%s \n", buffer);
+						}
+				}
+		}
+	free(p_search);
+	free(buffer);
+	fclose(file);
+	return 0; 
+}
+
+int main () 
+{
+	
+	squidLog *msg  ;
+	
+	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
+		{
+			perror("ERROR_BLACK_CALLOC");
+			exit(EXIT_FAILURE);
+		} 
+	squidLog ipcMsg_b;
+	
+	FILE *file = NULL ;
 	doOpenIPC_b(0);
 	
 	do
@@ -146,14 +188,12 @@ int main ()
 			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
 			sleep(1);
 			
-			search_forbidden_site(projection, msg);
+			search_forbidden_site(file, msg);
 				 
 		}  while (msg->mtype != 6);
-	 
-	munmap((FILE *) projection, length_file);
-	
+		
 	free(msg);
 		
 	return 0;
 	
-}
+}		

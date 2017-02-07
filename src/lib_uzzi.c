@@ -265,7 +265,7 @@ size_t strlcpy(char *dst, const char *src, size_t dsize)
 /* *********************************************************************** */
 void *read_thread(void *arg) 
 {
-	(void) arg ;
+	(void) arg ;	//in order to have no warning
 	printf("Begin READ \n");
 	FILE *fr = popen(PROG_READ, "r" ) ; 
 	if ( fr == NULL )
@@ -287,7 +287,7 @@ void *read_thread(void *arg)
 /* ********************************************************************************* */
 void *orche_thread(void *arg) 
 {
-	(void) arg ;
+	(void) arg ;	//in order to have no warning
 	squidLog *msg  ;
 	squidLog ipcMsg_r;
 	squidLog *ipcMsg_b;
@@ -304,18 +304,14 @@ void *orche_thread(void *arg)
 		} 
 	
 	 printf("Begin orche \n");
-	 //int i ;
+	
 	 do
-	 {
-	//for (i = 0; i < 5 ; i = i+1 ) 
-		//{
+		{
 			ReadIPC(&msg, ipcMsg_r, msg_id_r);
 			printf("Reception sur orchestrator : %s / %s / %s \n",msg->clientIpAdress, msg->urlDest, msg->user); 
 			WriteIPC(msg, ipcMsg_b, msg_id_b);	
-			
-			
-		//}
-	} while (msg->mtype != 6); //Un mtype égal à 6 indique qu'il n'y a plus de message à lire
+					
+		} while (msg->mtype != 6); // no message to read if mtype = 6
 	
 	free(msg);
 	free(ipcMsg_b);
@@ -328,14 +324,28 @@ void *orche_thread(void *arg)
 /* ************************************************************************ */
 void *black_thread(void *arg) 
 {
-	(void) arg ;
+	(void) arg ;   //in order to have no warning
 	printf("Begin BLACK \n");
+	char *lu;
 	FILE *fb = popen(PROG_BLACK, "r" ) ;
+	
 	if ( fb == NULL )
 	{
 		perror("popen_black_error");
 		exit(EXIT_FAILURE);
 	}
+	
+	if ( (lu = (char *)calloc(MAX, sizeof(char)) ) == NULL )
+	{
+		perror("calloc");
+		exit(EXIT_FAILURE);
+	}
+	
+	while ( fgets(lu, MAX, fb) != NULL ) 
+		{
+			fputs(lu, stdout); 
+		}
+	
 	if ( pclose(fb) == -1 ) 
 	{ 
 		perror("pclose_error"); 

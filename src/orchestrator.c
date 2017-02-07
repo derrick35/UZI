@@ -51,13 +51,13 @@ int main()
 		perror("pthread_attr_setdetachstate error");
 		exit(EXIT_FAILURE);
 	}
-	/*
+	
 	if (pthread_create(&thread_b, &thread_attr_b, black_thread, NULL) !=0 ) 
 		{
 			perror("THREAD_ERROR_CREATE");
 			return THREAD_ERROR;	
 		}	
-	 */
+	 
 	
 	if (pthread_create(&thread_r, &thread_attr_r , read_thread, NULL) !=0 ) 
 		{
@@ -80,7 +80,7 @@ int main()
 	
 
 	sleep(5);
-	//CloseIPC_b();
+	CloseIPC_b();
 	CloseIPC_r();
 
 	printf("2 IPC were closed \n");
