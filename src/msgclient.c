@@ -22,7 +22,7 @@ int main ()
 	msg0->mtype = 42 ; 
 	msg0->time = 123456789 ; 
 	strlcpy(msg0->clientIpAdress,"192.168.165.13",LOW_SIZE);
-	strlcpy(msg0->urlDest,"www.cfssi.fr",MAX_SIZE);
+	strlcpy(msg0->urlDest,"1.bp.blogspot.com/_8rixh4qw06m/r9aqpiusgsi/aaaaaaaahpi/bpsm70fvl8o/s1600-h/sexy",MAX_SIZE);
 	strlcpy(msg0->user,"Client1",LOW_SIZE);
 	WriteIPC(msg0, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);
@@ -33,7 +33,7 @@ int main ()
 	msg1->mtype = 42 ; 
 	msg1->time = 12345678910 ; 
 	strlcpy(msg1->clientIpAdress,"192.168.165.14",LOW_SIZE);
-	strlcpy(msg1->urlDest,"www.yahoo.fr",MAX_SIZE);
+	strlcpy(msg1->urlDest,"students.vassar.edu/vilee",MAX_SIZE);
 	strlcpy(msg1->user,"Client2",LOW_SIZE);
 	WriteIPC(msg1, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
 	sleep(2);

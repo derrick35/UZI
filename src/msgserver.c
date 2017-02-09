@@ -128,8 +128,16 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 	file = fopen(FILE_BLACK, "r");
 	if (file == NULL)
 	{
-		perror("open");
-		exit(EXIT_FAILURE);
+		if (errno == EINTR)
+			{
+				do {file = fopen(FILE_BLACK, "r"); }
+				while (errno == EINTR);
+			}
+		else 
+			{
+				perror("open");
+				exit(EXIT_FAILURE);
+			}
 	}
 	
 	if ( (buffer = (char *)calloc((MAX_SIZE +1 ) , sizeof(char))) == NULL)
@@ -157,12 +165,13 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 				{
 					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
 						{
-							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \n", msg->urlDest);
+							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s from %s with IP adress %s \n", msg->urlDest, msg->user,msg->clientIpAdress);
 							fprintf(stdout,"%s \n", buffer);
 						}
 				}
 		}
 	free(p_search);
+	free(ligne);
 	free(buffer);
 	fclose(file);
 	return 0; 
@@ -170,7 +179,7 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 
 int main () 
 {
-	
+	 
 	squidLog *msg  ;
 	
 	if ( (msg = (squidLog*)calloc(1, sizeof(squidLog) ) ) == NULL )
@@ -179,6 +188,7 @@ int main ()
 			exit(EXIT_FAILURE);
 		} 
 	squidLog ipcMsg_b;
+		 
 	
 	FILE *file = NULL ;
 	doOpenIPC_b(0);
@@ -189,6 +199,7 @@ int main ()
 			sleep(1);
 			
 			search_forbidden_site(file, msg);
+			
 				 
 		}  while (msg->mtype != 6);
 		

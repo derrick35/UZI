@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "../include/lib_uzzi.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,6 +14,8 @@
 #include <inttypes.h>
 #include <error.h>
 #include <errno.h>
+#include <pwd.h>
+#include <grp.h>
 
 
 /* ********************************************************** */
@@ -139,12 +142,12 @@ ipc_code CreateIPC_b()
 /* ******************************************** */
 /* *************** Close the IPC ************** */
 /* ******************************************** */
-int CloseIPC_r() 
+ipc_code CloseIPC_r() 
 {
 	return msgctl(msg_id_r, IPC_RMID, NULL);
 }
 
-int CloseIPC_b() 
+ipc_code CloseIPC_b() 
 {
 	return msgctl(msg_id_b, IPC_RMID, NULL);
 }
@@ -160,31 +163,30 @@ ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id)
 	
 	if (msg == NULL) 
 		{ 
-			perror("IPC_ERROR") ; 
-			exit(EXIT_FAILURE); 
+			perror("IPC_ERROR_R") ; 
+			return IPC_ERROR_R ; 
 		}
 	if ( *msg == NULL) 
 		{ 
-			perror("IPC_ERROR") ; 
-			exit(EXIT_FAILURE);  
+			perror("IPC_ERROR_R") ; 
+			return IPC_ERROR_R ;   
 		}
 	if ( (len = msgrcv(msg_id, (void *) &ipcMsg, sizeof(squidLog) +1, 0, 0) ) == -1) 
 		{
-			return IPC_ERROR ;
+			return IPC_ERROR_R ;
 		}
-	if ((*msg = (squidLog * ) calloc (1,len ) ) == NULL) 
+	if ((*msg = (squidLog * ) calloc (1,(size_t) len ) ) == NULL) 
 		{
 			perror("calloc_error");
-			exit(EXIT_FAILURE); 
+			return IPC_ERROR_R ; 
 		}
 	
-	(void)memmove( *msg, &ipcMsg, len ) ;
+	(void)memmove( *msg, &ipcMsg, (size_t) len ) ;
 	(*msg)->mtype = ipcMsg.mtype ; 
 	(*msg)->time = ipcMsg.time ; 
 	strlcpy((*msg)->clientIpAdress,ipcMsg.clientIpAdress,LOW_SIZE);
 	strlcpy((*msg)->urlDest,ipcMsg.urlDest,MAX_SIZE);
 	strlcpy((*msg)->user,ipcMsg.user,LOW_SIZE);
-	
 	
 	return IPC_SUCCESS;
 }
@@ -195,13 +197,15 @@ ipc_code ReadIPC(squidLog ** msg, squidLog ipcMsg, int msg_id)
 /* Data are written and sent to IPC */
 ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id) 
 {
-	if (  (ipcMsg =  (squidLog * ) calloc(1,sizeof(squidLog)) ) == NULL )
+	if (  (ipcMsg =  (squidLog * ) calloc(MAX ,sizeof(squidLog)) ) == NULL )
 		{
-			return IPC_ERROR ;
+			perror("IPC_ERROR_W") ; 
+			return IPC_ERROR_W;
 		}
 	if (  msg == NULL )
 		{
-			return IPC_ERROR ;
+			perror("IPC_ERROR_W") ; 
+			return IPC_ERROR_W;
 		}
 	
 	
@@ -213,9 +217,10 @@ ipc_code WriteIPC(squidLog *msg, squidLog *ipcMsg, int msg_id)
 	
 	if ( (msgsnd(msg_id, ipcMsg, sizeof(squidLog) +1 ,0)) == -1 )
 		{
-			return IPC_ERROR ; 
+			perror("IPC_ERROR_W") ; 
+			return IPC_ERROR_W;
 		} 
-	
+	free(ipcMsg);
 	return IPC_SUCCESS;
 }
 
@@ -256,8 +261,8 @@ size_t strlcpy(char *dst, const char *src, size_t dsize)
 		while (*src++)
 			;
 	}
-
-	return(src - osrc - 1);	/* count does not include NUL */
+	
+	return (size_t) (src - osrc - 1);	/* count does not include NUL */
 }
 
 /* *********************************************************************** */
@@ -267,6 +272,10 @@ void *read_thread(void *arg)
 {
 	(void) arg ;	//in order to have no warning
 	printf("Begin READ \n");
+	
+	
+	//int change_ids(uid_t uid, gid_t gid)
+	
 	FILE *fr = popen(PROG_READ, "r" ) ; 
 	if ( fr == NULL )
 		{
@@ -289,28 +298,30 @@ void *orche_thread(void *arg)
 {
 	(void) arg ;	//in order to have no warning
 	squidLog *msg  ;
-	squidLog ipcMsg_r;
-	squidLog *ipcMsg_b;
+	squidLog ipcMsg_r ;
+	squidLog *ipcMsg_b ;
 	
-	if ( (ipcMsg_b = (squidLog*)calloc( 1 , sizeof(squidLog)) ) == NULL )
-		{
-			perror("THREAD_ERROR_ORCHE_CALLOC");
-			exit(EXIT_FAILURE);
-		} 	 ;
-	if ( (msg = (squidLog*)calloc(1 , sizeof(squidLog) ) ) == NULL )
-		{
-			perror("THREAD_ERROR_ORCHE_CALLOC");
-			exit(EXIT_FAILURE);
-		} 
+	 if ( (ipcMsg_b = (squidLog*)calloc( 1 , sizeof(squidLog)) ) == NULL )
+			{
+				perror("THREAD_ERROR_ORCHE_CALLOC");
+				exit(EXIT_FAILURE);
+			}  
+	
+	 if ( (msg = (squidLog*)calloc(1 , sizeof(squidLog) ) ) == NULL )
+			{
+				perror("THREAD_ERROR_ORCHE_CALLOC");
+				exit(EXIT_FAILURE);
+			}  	
 	
 	 printf("Begin orche \n");
 	
 	 do
 		{
+			free(msg);
 			ReadIPC(&msg, ipcMsg_r, msg_id_r);
 			printf("Reception sur orchestrator : %s / %s / %s \n",msg->clientIpAdress, msg->urlDest, msg->user); 
 			WriteIPC(msg, ipcMsg_b, msg_id_b);	
-					
+														
 		} while (msg->mtype != 6); // no message to read if mtype = 6
 	
 	free(msg);
@@ -352,5 +363,61 @@ void *black_thread(void *arg)
 		exit(EXIT_FAILURE);
 	}
 	
+	free(lu);
 	pthread_exit(NULL);
 }
+
+/* ************************************************** */
+/* ******************* Changement of identity ******* */
+/* ************************************************** */
+uid_t uid_from_name(const char* name){
+   struct passwd* pw;
+   pw = getpwnam(name);
+   if (pw == NULL) {
+     perror("getpwnam failed with");
+     exit(EXIT_FAILURE);
+   }
+   return pw->pw_uid;
+}
+gid_t gid_from_name(const char* group){  
+   struct group* gr;
+   gr = getgrnam(group);
+   if (gr == NULL) {
+     perror("getgrnam failed with");
+     exit(EXIT_FAILURE);
+   }
+   return gr->gr_gid;
+}
+
+int change_ids(uid_t uid, gid_t gid)
+{
+  // Changements d'identité : uid (1er arg), gid (2ème arg).
+  // On supprime également l'ensemble des groupes supplémentaires pour
+  // perdre tous les privilèges.
+  
+  // Attention : idéalement, il faudrait ici vérifier les autres 
+  // groupes via getgroups, et rendre une erreur si le processus 
+  // n'a pas la capability d'exécuter setgroups (CAP_SETGID)
+
+	/* Changement of gid */
+    if (setresgid(gid, gid, gid) != 0){
+      perror("Setresgid");
+      return -1;
+    }
+    // Abandon des éventuels groupes supplémentaires
+    if (setgroups(0, NULL) != 0){
+      perror("Setgroups");
+      return -1;
+    }
+ 
+    // Changement of uid in order not to be root.
+    // We change uid, euid and suid of process 
+    if (setresuid(uid, uid, uid) != 0){
+      perror("Setresuid");
+      return -1;
+    }
+  
+
+  return 0;
+}
+

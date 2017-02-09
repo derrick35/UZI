@@ -10,7 +10,7 @@
 /* *************************************************** */
 /* **************  ERROR MANAGEMENT   *************** */
 /* *************************************************** */
-typedef enum _IPC_CODE { IPC_ERROR, IPC_SUCCESS } ipc_code;
+typedef enum _IPC_CODE { IPC_ERROR, IPC_ERROR_R, IPC_ERROR_W, IPC_SUCCESS } ipc_code;
 
 typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } thread_code ;
 

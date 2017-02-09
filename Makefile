@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS= -fdiagnostics-color=always -Wall -pedantic -Wextra 
-LDFLAGS=-lpthread -lrt
+CFLAGS= -fdiagnostics-color=always -Wall -pedantic -Wextra -Wconversion 
+LDFLAGS=-lpthread -lrt -g -lseccomp
 EXEC=orchestrator msgclient msgserver
 
 
