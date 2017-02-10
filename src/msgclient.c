@@ -10,7 +10,7 @@
 
 int main () 
 {
-	
+	change_ids(proxy, uzi);
 	printf("Envoi de messages vers orchestrator \n");
 	doOpenIPC_r(0);
 	printf("test \n");
@@ -25,7 +25,7 @@ int main ()
 	strlcpy(msg0->urlDest,"1.bp.blogspot.com/_8rixh4qw06m/r9aqpiusgsi/aaaaaaaahpi/bpsm70fvl8o/s1600-h/sexy",MAX_SIZE);
 	strlcpy(msg0->user,"Client1",LOW_SIZE);
 	WriteIPC(msg0, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	sleep(2);
+	sleep(1);
 	
 		
 	squidLog *msg1  ;
@@ -36,7 +36,7 @@ int main ()
 	strlcpy(msg1->urlDest,"students.vassar.edu/vilee",MAX_SIZE);
 	strlcpy(msg1->user,"Client2",LOW_SIZE);
 	WriteIPC(msg1, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	sleep(2);
+	sleep(1);
 	
 	squidLog *msg2  ;
 	msg2 = (squidLog*)calloc(1, sizeof(squidLog) ) ;
@@ -46,7 +46,7 @@ int main ()
 	strlcpy(msg2->urlDest,"www.news.fr",MAX_SIZE);
 	strlcpy(msg2->user,"Client3",LOW_SIZE);
 	WriteIPC(msg2, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	sleep(2);
+	sleep(1);
 		
 	squidLog *msg3  ;
 	msg3 = (squidLog*)calloc(1, sizeof(squidLog) ) ;
@@ -56,7 +56,7 @@ int main ()
 	strlcpy(msg3->urlDest,"www.voila.fr",MAX_SIZE);
 	strlcpy(msg3->user,"Client4",LOW_SIZE);
 	WriteIPC(msg3, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	sleep(2);
+	sleep(1);
 		
 	
 	squidLog *msg4  ;
@@ -67,7 +67,7 @@ int main ()
 	strlcpy(msg4->urlDest,"www.info.fr",MAX_SIZE);
 	strlcpy(msg4->user,"Client5",LOW_SIZE);
 	WriteIPC(msg4, ipcMsg_r, msg_id_r);  //Le message msg est copié et envoyé dans l'IPC READ
-	sleep(2);
+	sleep(1);
 	
 	printf("fin de l'envoi \n");
 	

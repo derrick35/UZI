@@ -144,11 +144,39 @@ ipc_code CreateIPC_b()
 /* ******************************************** */
 ipc_code CloseIPC_r() 
 {
+	if ( msgctl(msg_id_r, IPC_RMID, NULL) == -1)
+		{
+			if (errno == EPERM ) 
+				{
+					perror(" Close IPC_READ");
+					return IPC_ERROR;
+				}
+			else
+				{
+					perror("Impossible to close IPC_READ");
+					return IPC_ERROR;
+				}
+		}
+		
 	return msgctl(msg_id_r, IPC_RMID, NULL);
 }
 
 ipc_code CloseIPC_b() 
 {
+	if ( msgctl(msg_id_b, IPC_RMID, NULL) == -1)
+		{
+			if (errno == EPERM ) 
+				{
+					perror("Close IPC_BLACK");
+					return IPC_ERROR;
+				}
+			else
+				{
+					perror("Impossible to close IPC_BLACK");
+					return IPC_ERROR;
+				}
+		}
+		
 	return msgctl(msg_id_b, IPC_RMID, NULL);
 }
 
@@ -231,21 +259,7 @@ size_t strlcpy(char *dst, const char *src, size_t dsize)
 {
 	const char *osrc = src;
 	size_t nleft = dsize;
-	/*
-	if ( (osrc = (char *)calloc( 1, sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(osrc);
-			exit(EXIT_FAILURE);
-		}
 		
-	if ( (dst = (char *)calloc( 1, sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(dst);
-			exit(EXIT_FAILURE);
-		}	*/
-
 	/* Copy as many bytes as will fit. */
 	if (nleft != 0) {
 		while (--nleft != 0) {
@@ -273,15 +287,25 @@ void *read_thread(void *arg)
 	(void) arg ;	//in order to have no warning
 	printf("Begin READ \n");
 	
-	
-	//int change_ids(uid_t uid, gid_t gid)
-	
 	FILE *fr = popen(PROG_READ, "r" ) ; 
 	if ( fr == NULL )
 		{
 			perror("popen_read_error");
 			exit(EXIT_FAILURE);
 		}
+		/*POUR LE DEBUG
+		char *lu;
+		if ( (lu = (char *)calloc(MAX, sizeof(char)) ) == NULL )
+	{
+		perror("calloc");
+		exit(EXIT_FAILURE);
+	}
+	
+	while ( fgets(lu, MAX, fr) != NULL ) 
+		{
+			fputs(lu, stdout); 
+		}	*/
+		
 	if ( pclose(fr) == -1) 
 		{ 
 			perror("pclose_error");
@@ -314,18 +338,32 @@ void *orche_thread(void *arg)
 			}  	
 	
 	 printf("Begin orche \n");
-	
+	 
+	/* Ochestrator will have no privilege and belong to uzi group */ 
+	change_ids(nobody, uzi);
+		
 	 do
 		{
 			free(msg);
-			ReadIPC(&msg, ipcMsg_r, msg_id_r);
+			if ( ReadIPC(&msg, ipcMsg_r, msg_id_r) == IPC_ERROR_R )
+				{
+					CloseIPC_r();
+				}
 			printf("Reception sur orchestrator : %s / %s / %s \n",msg->clientIpAdress, msg->urlDest, msg->user); 
-			WriteIPC(msg, ipcMsg_b, msg_id_b);	
+			if ( WriteIPC(msg, ipcMsg_b, msg_id_b) == IPC_ERROR_W ) 
+				{
+					CloseIPC_b();
+				}
 														
 		} while (msg->mtype != 6); // no message to read if mtype = 6
 	
 	free(msg);
 	free(ipcMsg_b);
+	
+	
+	uid_t uid_R, uid_E, uid_S;
+	getresuid(& uid_R, & uid_E, & uid_S);
+	setreuid(uid_S,uid_S);
 	pthread_exit(NULL);
 	
 }
@@ -338,6 +376,7 @@ void *black_thread(void *arg)
 	(void) arg ;   //in order to have no warning
 	printf("Begin BLACK \n");
 	char *lu;
+		
 	FILE *fb = popen(PROG_BLACK, "r" ) ;
 	
 	if ( fb == NULL )
@@ -370,54 +409,30 @@ void *black_thread(void *arg)
 /* ************************************************** */
 /* ******************* Changement of identity ******* */
 /* ************************************************** */
-uid_t uid_from_name(const char* name){
-   struct passwd* pw;
-   pw = getpwnam(name);
-   if (pw == NULL) {
-     perror("getpwnam failed with");
-     exit(EXIT_FAILURE);
-   }
-   return pw->pw_uid;
-}
-gid_t gid_from_name(const char* group){  
-   struct group* gr;
-   gr = getgrnam(group);
-   if (gr == NULL) {
-     perror("getgrnam failed with");
-     exit(EXIT_FAILURE);
-   }
-   return gr->gr_gid;
-}
 
 int change_ids(uid_t uid, gid_t gid)
 {
-  // Changements d'identité : uid (1er arg), gid (2ème arg).
-  // On supprime également l'ensemble des groupes supplémentaires pour
-  // perdre tous les privilèges.
-  
-  // Attention : idéalement, il faudrait ici vérifier les autres 
-  // groupes via getgroups, et rendre une erreur si le processus 
-  // n'a pas la capability d'exécuter setgroups (CAP_SETGID)
 
 	/* Changement of gid */
-    if (setresgid(gid, gid, gid) != 0){
-      perror("Setresgid");
-      return -1;
-    }
-    // Abandon des éventuels groupes supplémentaires
-    if (setgroups(0, NULL) != 0){
-      perror("Setgroups");
-      return -1;
-    }
+    if (setresgid(gid, gid, gid) != 0)
+		{
+			perror("Setresgid");
+			exit(EXIT_FAILURE);
+		}
+    // Disengage potential additional groups 
+    if (setgroups(0, NULL) != 0)
+		{
+			perror("Setgroups");
+			exit(EXIT_FAILURE);
+		}
  
     // Changement of uid in order not to be root.
     // We change uid, euid and suid of process 
-    if (setresuid(uid, uid, uid) != 0){
-      perror("Setresuid");
-      return -1;
-    }
-  
-
-  return 0;
+    if (setreuid(uid, uid) != 0)
+		{
+			perror("Setreuid");
+			exit(EXIT_FAILURE);
+		}
+	return 0;
 }
 

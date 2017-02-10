@@ -188,15 +188,19 @@ int main ()
 			exit(EXIT_FAILURE);
 		} 
 	squidLog ipcMsg_b;
-		 
 	
+	 /* Blacklist will have no privilege and belong to uzi group  */	 
+	change_ids(nobody, uzi);
+
 	FILE *file = NULL ;
 	doOpenIPC_b(0);
 	
 	do
 		{
-			ReadIPC(&msg, ipcMsg_b, msg_id_b); //  Les données dans l'IPC BLACK sont copiées dans le message msg
-			sleep(1);
+			if ( ReadIPC(&msg, ipcMsg_b, msg_id_b) == IPC_ERROR_R ) //  Les données dans l'IPC BLACK sont copiées dans le message msg
+				{
+					CloseIPC_b();
+				}
 			
 			search_forbidden_site(file, msg);
 			

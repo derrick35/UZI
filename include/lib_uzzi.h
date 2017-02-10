@@ -7,9 +7,9 @@
 #include <sys/msg.h>
 
 
-/* *************************************************** */
-/* **************  ERROR MANAGEMENT   *************** */
-/* *************************************************** */
+/* ************************************************************************************ */
+/* ************************  ERROR MANAGEMENT   *************************************** */
+/* ************************************************************************************ */
 typedef enum _IPC_CODE { IPC_ERROR, IPC_ERROR_R, IPC_ERROR_W, IPC_SUCCESS } ipc_code;
 
 typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } thread_code ;
@@ -37,16 +37,25 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 #define PROG_READ "./msgclient"
 
 /* Name of the BLACK executable */
-#define PROG_BLACK "./msgserver"
+#define PROG_BLACK "./blacklist"
 
 /* Name of the Blacklist file */
 #define FILE_BLACK "blacklist.txt"
 
 /* Read can write message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0622 
+#define DEFAULT_IPC_PERM_READ  0666 
 
 /* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0644
+#define DEFAULT_IPC_PERM_BLACK  0666
+
+/*  Identity for BLACK and ORCHESTRATOR Programme  */
+#define nobody 65534
+
+/* Identity for READ Programme  */
+#define proxy 13
+
+/* Group for the Programmes */
+#define uzi 1001
 
 
 /* ********************************************* */
@@ -112,6 +121,12 @@ ipc_code doOpenIPC_b(int flag);
 /* Obtain a key and create a new message queue with error management */
 ipc_code CreateIPC_b() ;
 
+/* Close the IPC where READ Programme write message */
+ipc_code CloseIPC_r() ;
+
+/* Close the IPC where BLACK Programme read message */
+ipc_code CloseIPC_b() ;
+
 /* Orchestrator read message from PROG READ  */
 ipc_code ReadIPC(squidLog **msg, squidLog ipcMsg_r, int msg_id);
 
@@ -129,6 +144,9 @@ void *orche_thread(void *arg);
 
 /* Launch Thread of the BLACK PROG */
 void *black_thread(void *arg) ;
+
+/* Changement of identity  */
+int change_ids(uid_t uid, gid_t gid);
 
 
 #endif

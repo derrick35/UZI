@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -fdiagnostics-color=always -Wall -pedantic -Wextra -Wconversion 
 LDFLAGS=-lpthread -lrt -g -lseccomp
-EXEC=orchestrator msgclient msgserver
+EXEC=orchestrator msgclient blacklist
 
 
 all:$(EXEC)
@@ -14,9 +14,9 @@ msgclient: lib_uzzi.o msgclient.o
 	$(CC) -o $@ $^  $(LDFLAGS)
 msgclient.o: ./src/msgclient.c ./include/lib_uzzi.h
 	$(CC) $(CFLAGS) -c $<
-msgserver: lib_uzzi.o msgserver.o
+blacklist: lib_uzzi.o blacklist.o
 	$(CC) -o $@ $^ $(LDFLAGS)
-msgserver.o: ./src/msgserver.c ./include/lib_uzzi.h 
+blacklist.o: ./src/blacklist.c ./include/lib_uzzi.h 
 	$(CC) $(CFLAGS) -c $<
 lib_uzzi:lib_uzzi.o 
 	$(CC) -o $@ $^ $(LDFLAGS)
