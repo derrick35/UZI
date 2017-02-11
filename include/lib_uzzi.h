@@ -43,10 +43,10 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 #define FILE_BLACK "blacklist.txt"
 
 /* Read can write message but only orchestrator can read */
-#define DEFAULT_IPC_PERM_READ  0666 
+#define DEFAULT_IPC_PERM_READ  0660
 
 /* Blacklist can read message but only orchestrator can write */
-#define DEFAULT_IPC_PERM_BLACK  0666
+#define DEFAULT_IPC_PERM_BLACK  0660
 
 /*  Identity for BLACK and ORCHESTRATOR Programme  */
 #define nobody 65534
@@ -55,7 +55,7 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 #define proxy 13
 
 /* Group for the Programmes */
-#define uzi 1001
+#define uzi 1002
 
 
 /* ********************************************* */

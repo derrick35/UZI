@@ -8,7 +8,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <inttypes.h>
@@ -324,6 +323,7 @@ void *orche_thread(void *arg)
 	squidLog *msg  ;
 	squidLog ipcMsg_r ;
 	squidLog *ipcMsg_b ;
+	uid_t euid = geteuid();
 	
 	 if ( (ipcMsg_b = (squidLog*)calloc( 1 , sizeof(squidLog)) ) == NULL )
 			{
@@ -337,10 +337,17 @@ void *orche_thread(void *arg)
 				exit(EXIT_FAILURE);
 			}  	
 	
-	 printf("Begin orche \n");
-	 
+	 printf("Begin Orchestrator \n");
+	 printf(" Avant chgt uid = %d , euid = %d et gid = %d \n",getuid(), geteuid(), getgid());
 	/* Ochestrator will have no privilege and belong to uzi group */ 
-	change_ids(nobody, uzi);
+	
+	if ( setresuid(euid,nobody,nobody) == -1 )
+		{
+			perror("setreuid");
+			exit(EXIT_FAILURE);
+		}
+	
+	printf(" Apres chgt  uid = %d et euid = %d gid = %d \n",getuid(), geteuid(), getgid());
 		
 	 do
 		{
@@ -360,10 +367,12 @@ void *orche_thread(void *arg)
 	free(msg);
 	free(ipcMsg_b);
 	
-	
-	uid_t uid_R, uid_E, uid_S;
-	getresuid(& uid_R, & uid_E, & uid_S);
-	setreuid(uid_S,uid_S);
+	if (setresuid(0,0,nobody) == -1) 
+		{
+			perror("setreuid");
+		}
+		
+	printf(" Apres modif  uid = %d et euid = %d \n",getuid(), geteuid());
 	pthread_exit(NULL);
 	
 }
