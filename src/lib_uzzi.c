@@ -367,6 +367,7 @@ void *orche_thread(void *arg)
 	free(msg);
 	free(ipcMsg_b);
 	
+	/* Orchestrator will have again root privilege */
 	if (setresuid(0,0,nobody) == -1) 
 		{
 			perror("setreuid");

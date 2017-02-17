@@ -60,7 +60,7 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 				{
 					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
 						{
-							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s from %s with IP adress %s \n", msg->urlDest, msg->user,msg->clientIpAdress);
+							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \t from %s \t with IP adress %s \n", msg->urlDest, msg->user,msg->clientIpAdress);
 							fprintf(stdout,"%s \n", buffer);
 						}
 				}
