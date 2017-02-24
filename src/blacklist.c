@@ -11,67 +11,8 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-
-
-int search_forbidden_site(FILE *file, squidLog *msg)
-{
-	char *p_search = NULL; 	
-	char *ligne ;	
-	char *buffer;
-	
-	
-	file = fopen(FILE_BLACK, "r");
-	if (file == NULL)
-	{
-		if (errno == EINTR)
-			{
-				do {file = fopen(FILE_BLACK, "r"); }
-				while (errno == EINTR);
-			}
-		else 
-			{
-				perror("open");
-				exit(EXIT_FAILURE);
-			}
-	}
-	
-	if ( (buffer = (char *)calloc((MAX_SIZE +1 ) , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(buffer);
-			exit(EXIT_FAILURE);
-		}
-	 
-	 if ( (p_search = (char *)calloc((MAX_SIZE +1) , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(p_search);
-			exit(EXIT_FAILURE);
-		}
-	if ( (ligne = (char *)calloc(1024 , sizeof(char))) == NULL)
-		{
-			perror("calloc");
-			free(ligne);
-			exit(EXIT_FAILURE);
-		}
-	if ( file != NULL)
-		{
-			while( fgets(ligne, MAX_SIZE , file) != NULL )
-				{
-					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
-						{
-							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \t from %s \t with IP adress %s \n", msg->urlDest, msg->user,msg->clientIpAdress);
-							fprintf(stdout,"%s \n", buffer);
-						}
-				}
-		}
-		
-	free(p_search);
-	free(ligne);
-	free(buffer);
-	fclose(file);
-	return 0; 
-}
+#include <grp.h>
+#include <pwd.h>
 
 int main () 
 {
@@ -85,11 +26,14 @@ int main ()
 		} 
 	
 	/* Blacklist will have no privilege and belong to uzi group  */	 
+	gid_t uzi = gid_from_name("uzi");
+	uid_t nobody = uid_from_name("nobody");
 	change_ids(nobody, uzi);
 
 	FILE *file = NULL ;
-	doOpenIPC_b(0);
+	doOpenIPC_b(0); // Open the IPC BLACK
 	
+	/* We search forbidden sites from the blacklist file */
 	do
 		{
 			if ( ReadIPC(&msg, ipcMsg_b, msg_id_b) == IPC_ERROR_R ) 

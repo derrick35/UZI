@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#include <seccomp.h>
 
 
 /* ********************************************************** */
@@ -341,6 +342,7 @@ void *orche_thread(void *arg)
 	 printf(" Avant chgt uid = %d , euid = %d et gid = %d \n",getuid(), geteuid(), getgid());
 	/* Ochestrator will have no privilege and belong to uzi group */ 
 	
+	uid_t nobody = uid_from_name("nobody");
 	if ( setresuid(euid,nobody,nobody) == -1 )
 		{
 			perror("setreuid");
@@ -446,3 +448,221 @@ int change_ids(uid_t uid, gid_t gid)
 	return 0;
 }
 
+
+/* ********************************************************************** */
+/* ******************* Get back the uid from the name of a group  ******* */
+/* ********************************************************************** */
+uid_t uid_from_name(const char* name){
+   struct passwd* pw;
+   pw = getpwnam(name);
+   if (pw == NULL) 
+	{
+		perror("getpwnam failed with");
+		return 2;
+	}
+   return pw->pw_uid;
+}	
+
+
+/* ********************************************************************** */
+/* ******************* Get back the gid from the name of a group  ******* */
+/* ********************************************************************** */
+gid_t gid_from_name(const char* group){  
+   struct group* gr;
+   gr = getgrnam(group);
+   if (gr == NULL) 
+	{
+		perror("getgrnam failed with");
+		return 2;
+	}
+   return gr->gr_gid;
+}
+
+
+/* ******************************************************************************************** */
+/* ***************  Open a file which name is written in the configuration file  ************** */
+/* ******************************************************************************************** */
+FILE* openDir(FILE *file_config)
+{
+	FILE *file_dest;
+	char *line = NULL ;
+	line = (char *)calloc(MAX_SIZE , sizeof(char));	
+	char *pointeur = NULL;
+	pointeur = (char *)calloc(MAX_SIZE , sizeof(char));	
+	char *path = NULL;
+	char *com = "#";
+	path = (char *)calloc(MAX_SIZE , sizeof(char));	
+	
+	/* Read the file_config line by line and search the path to the blacklist.txt file */
+	while ( fgets(line, MAX_SIZE , file_config) != NULL ) 
+	{
+		if ( strstr(line, com) == NULL ) // dont take into account commentaries
+			{
+				if ( strtok_r(line,"=\n",&pointeur) == NULL) 
+					{
+						exit(EXIT_FAILURE);
+					}
+				path = strtok_r(NULL,"=\n",&pointeur);
+				file_dest = fopen(path, "r");
+				if (file_dest == NULL)
+					{
+						if (errno == EINTR)
+							{
+								do 
+									{
+										file_dest = fopen(path, "r"); 
+									}		
+								while (errno == EINTR);
+							}
+						else 
+							{
+								perror("openDir");
+								exit(EXIT_FAILURE);
+							}
+					}	
+			}
+	}
+		fclose(file_config);
+		return file_dest;
+}
+
+/* ***************************************************************************** */
+/* ***************  Search forbidden site from the blacklist fil  ************** */
+/* ***************************************************************************** */
+int search_forbidden_site(FILE *file, squidLog *msg)
+{
+	char *p_search = NULL; 	
+	char *ligne ;	
+	char *buffer;
+	FILE *file_config = fopen("black.config", "r");
+	if (file_config == NULL)
+		{
+			if (errno == EINTR)
+				{
+					do {file_config = fopen("black.config", "r"); }
+					while (errno == EINTR);
+				}
+			else 
+				{
+					perror("open config");
+					exit(EXIT_FAILURE);
+				}
+		}
+	
+	file = openDir(file_config);
+	
+	if ( (buffer = (char *)calloc((MAX_SIZE +1 ) , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(buffer);
+			exit(EXIT_FAILURE);
+		}
+	 
+	 if ( (p_search = (char *)calloc((MAX_SIZE +1) , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(p_search);
+			exit(EXIT_FAILURE);
+		}
+	if ( (ligne = (char *)calloc(1024 , sizeof(char))) == NULL)
+		{
+			perror("calloc");
+			free(ligne);
+			exit(EXIT_FAILURE);
+		}
+	if ( file != NULL)
+		{
+			/* Read the file line by line and search the message msg->urlDest  */
+			while( fgets(ligne, MAX_SIZE , file) != NULL )
+				{
+					if ( ( p_search = strstr(ligne, msg->urlDest) ) != NULL)
+						{
+							snprintf(buffer, MAX_SIZE +1 ,"Forbidden url : %s \t from %s \t with IP adress %s \n", msg->urlDest, msg->user,msg->clientIpAdress);
+							fprintf(stdout,"%s \n", buffer);
+						}
+				}
+		}
+		
+	free(p_search);
+	free(ligne);
+	free(buffer);
+	fclose(file);
+	return 0; 
+}
+
+/* ***************************************************************************************************************************** */
+/* ***************  Launch the firlter seccomp in order to forbidden call systems non necessary to the programme  ************** */
+/* ***************************************************************************************************************************** */
+int seccomp()
+{
+	/*  Init the filter SECCOMP  */
+	scmp_filter_ctx ctx;
+	ctx = seccomp_init(SCMP_ACT_KILL); // default action: kill
+	 if (!ctx) 
+		{
+			perror( "Failed to initialize libseccomp\n");
+			exit(EXIT_FAILURE);
+		}
+
+	/* setup basic whitelist	*/
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(access), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(arch_prctl), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(clone), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(connect), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(dup), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(dup2), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(execve), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit_group), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fcntl), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(futex), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getcwd), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(geteuid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getgid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getpid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getppid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getresuid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getrlimit), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getuid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(lseek), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(madvise), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(msgctl), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(msgget), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(msgrcv), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(msgsnd), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(nanosleep), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(open), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(pipe2), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(prctl), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(restart_syscall), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigaction), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigprocmask), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setgroups), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setresgid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setregid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setreuid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setresuid), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_robust_list), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_tid_address), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(stat), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(tgkill), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(wait4), 0);
+	seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
+
+		
+	/* build and load the filter	*/
+	 if (seccomp_load(ctx) != 0) 
+		{
+			fprintf(stderr, "Failed to load the filter in the kernel\n");
+			return -1;
+		}
+	return 0;
+}

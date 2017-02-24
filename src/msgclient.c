@@ -6,10 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <grp.h>
+#include <pwd.h>
 
 
 int main () 
 {
+	gid_t uzi = gid_from_name("uzi");
+	uid_t proxy = uid_from_name("proxy");
 	change_ids(proxy, uzi);
 	printf("Envoi de messages vers orchestrator \n");
 	doOpenIPC_r(0);

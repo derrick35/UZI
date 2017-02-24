@@ -1,6 +1,7 @@
 #ifndef _LIB_UZZI_
 #define _LIB_UZZI_ 
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -39,28 +40,17 @@ typedef enum _THREAD_CODE { THREAD_ERROR, THREAD_ERROR_JOIN, THREAD_SUCCESS } th
 /* Name of the BLACK executable */
 #define PROG_BLACK "./blacklist"
 
-/* Name of the Blacklist file */
-#define FILE_BLACK "blacklist.txt"
-
 /* Read can write message but only orchestrator can read */
 #define DEFAULT_IPC_PERM_READ  0660
 
 /* Blacklist can read message but only orchestrator can write */
 #define DEFAULT_IPC_PERM_BLACK  0660
 
-/*  Identity for BLACK and ORCHESTRATOR Programme  */
-#define nobody 65534
-
-/* Identity for READ Programme  */
-#define proxy 13
-
-/* Group for the Programmes */
-#define uzi 1002
 
 
-/* ********************************************* */
-/* Name of the variables used by the programmes */
-/* ********************************************* */
+/* ********************************************************************** */
+/* ********** Name of the variables used by the programmes ************** */
+/* ********************************************************************** */
 
 /* id message queue for READ PROG*/
 int msg_id_r ;
@@ -99,9 +89,9 @@ typedef struct {
 } squidLog;
 
 
-/* ****************************/
-/* ******* Functions ******** */
-/* ************************** */
+/* **********************************************************************/
+/* *****************  FUNCTIONS  ************************************** */
+/* ******************************************************************** */
 
 /* In order to obtain a key */
 key_t doExtractKey_r();
@@ -133,7 +123,7 @@ ipc_code ReadIPC(squidLog **msg, squidLog ipcMsg_r, int msg_id);
 /* Orchestrator write message for PROG BLACK  */
 ipc_code WriteIPC(squidLog *msg, squidLog* ipcMsg_b, int msg_id) ;
 
-/* Definition of strlcpy function from BSD */
+/* Definition of strlcpy : secure function from BSD environment */
 size_t strlcpy(char *dst, const char *src, size_t dsize);
 
 /* Launch Thread of the READ PROG */
@@ -148,6 +138,20 @@ void *black_thread(void *arg) ;
 /* Changement of identity  */
 int change_ids(uid_t uid, gid_t gid);
 
+/* Get back the gid from the name of a group */
+gid_t gid_from_name(const char* group);
+
+/* Get back the uid from the name of a group */
+uid_t uid_from_name(const char* name);
+
+/* Open a file which name is written in the configuration file  */
+FILE* openDir(FILE *file_config);
+
+/* Search forbidden site from the blacklist file  */
+int search_forbidden_site(FILE *file, squidLog *msg);
+
+/* Launch the firlter seccomp in order to forbidden call systems non necessary to the programme */
+int seccomp();
 
 #endif
 
