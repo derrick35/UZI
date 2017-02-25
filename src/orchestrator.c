@@ -19,8 +19,8 @@
 
 int main()
 {
-	/* Launch the firlter seccomp in order to forbidden call systems non necessary to the programme */
-	//seccomp();
+	/* Launch the filter seccomp in order to forbidden call systems non necessary to the programme */
+	seccomp();
 	
 	while (1) 
 	{

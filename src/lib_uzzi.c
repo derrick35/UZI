@@ -293,19 +293,7 @@ void *read_thread(void *arg)
 			perror("popen_read_error");
 			exit(EXIT_FAILURE);
 		}
-		/*POUR LE DEBUG
-		char *lu;
-		if ( (lu = (char *)calloc(MAX, sizeof(char)) ) == NULL )
-	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
-	}
-	
-	while ( fgets(lu, MAX, fr) != NULL ) 
-		{
-			fputs(lu, stdout); 
-		}	*/
-		
+			
 	if ( pclose(fr) == -1) 
 		{ 
 			perror("pclose_error");
@@ -439,7 +427,7 @@ int change_ids(uid_t uid, gid_t gid)
 		}
  
     // Changement of uid in order not to be root.
-    // We change uid, euid and suid of process 
+    // We change uid and euid of process 
     if (setreuid(uid, uid) != 0)
 		{
 			perror("Setreuid");
@@ -534,12 +522,12 @@ int search_forbidden_site(FILE *file, squidLog *msg)
 	char *p_search = NULL; 	
 	char *ligne ;	
 	char *buffer;
-	FILE *file_config = fopen("black.config", "r");
+	FILE *file_config = fopen("./config/black.config", "r");
 	if (file_config == NULL)
 		{
 			if (errno == EINTR)
 				{
-					do {file_config = fopen("black.config", "r"); }
+					do {file_config = fopen("./config/black.config", "r"); }
 					while (errno == EINTR);
 				}
 			else 
