@@ -1,2 +1,0 @@
-﻿/* libFile_uzzi.o:./lib/libFile_uzzi.c ./include/libFile_uzzi.h
-	$(CC) $(CFLAGS) -c $^	*/
